@@ -87,20 +87,20 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       needed_runtime = instance_double(RequiredRuntime,
                                        os_name: 'iOS',
                                        product_version: Gem::Version.new('17.0'),
-                                       product_build_version: nil)
+                                       product_build_version: AppleBuildVersion.new('21A326'))
 
       available_runtime = instance_double(Runtime,
                                           platform: 'iOS',
                                           version: Gem::Version.new('17.0.1'),
-                                          build_version: AppleBuildVersion.new('21A326'))
+                                          build_version: AppleBuildVersion.new('21A457'))
 
       allow(shell_helper).to receive(:available_runtimes).and_return([available_runtime])
       allow(needed_runtime).to receive(:product_build_version=)
       allow(needed_runtime).to receive(:product_build_version).and_return(AppleBuildVersion.new('21A326'))
       allow(needed_runtime).to receive(:product_version=).with(Gem::Version.new('17.0.1'))
 
-      build_version = AppleBuildVersion.new('21A326')
-      allow(build_version).to receive(:almost_equal?).with(AppleBuildVersion.new('21A326')).and_return(true)
+      build_version = AppleBuildVersion.new('21A457')
+      allow(build_version).to receive(:almost_equal?).with(AppleBuildVersion.new('21A457')).and_return(true)
       allow(needed_runtime).to receive(:product_build_version).and_return(build_version)
 
       # WHEN: Finding matching runtime
@@ -245,7 +245,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       existing_file = '/tmp/test_cache/iphonesimulator_17.0.1_21A326.dmg'
 
       allow(FileUtils).to receive(:mkdir_p).with(cache_dir)
-      allow(Dir).to receive(:glob).with(/iphonesimulator_17\.0\*_21A32\*\.dmg/).and_return([existing_file])
+      allow(Dir).to receive(:glob).with(/iphonesimulator_17\.0\*_21A\*\.dmg/).and_return([existing_file])
       allow(sut).to receive(:runtime_build_version_for_filename).and_return(AppleBuildVersion.new('21A326'))
       allow(Fastlane::UI).to receive(:message)
 

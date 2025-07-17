@@ -157,7 +157,7 @@ module Fastlane
         # shipped with Xcode betas and use the same product version.
         # E.g. Xcode 26.0 Beta 3 has iOS 26.0 (23A5287e) SDK, but
         # xcodebuild downloads iphonesimulator_26.0_23A5287g.dmg as latest.
-        runtime_dmg_search_pattern += missing_runtime.product_build_version.to_s.chop if missing_runtime.product_build_version
+        runtime_dmg_search_pattern += missing_runtime.product_build_version.minor_version.to_s if missing_runtime.product_build_version
         runtime_dmg_search_pattern += '*.dmg'
 
         if verbose
