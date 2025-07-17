@@ -148,11 +148,9 @@ module Fastlane
           missing_runtime.os_name.shellescape
         ]
 
-        unless missing_runtime.latest?
-          command << '-buildVersion'
-          # Prefer the build version if available, otherwise use the product version.
-          command << (missing_runtime.product_build_version || missing_runtime.product_version.to_s).shellescape
-        end
+        command << '-buildVersion'
+        # Prefer the build version if available, otherwise use the product version.
+        command << (missing_runtime.product_build_version || missing_runtime.product_version).to_s.shellescape
 
         sh(command: command.join(' '), print_command: true, print_command_output: true)
       end
