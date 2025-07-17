@@ -148,11 +148,8 @@ module Fastlane
           missing_runtime.os_name.shellescape
         ]
 
-        unless missing_runtime.latest?
-          command << '-buildVersion'
-          # Prefer the build version if available, otherwise use the product version.
-          command << (missing_runtime.product_build_version || missing_runtime.product_version.to_s).shellescape
-        end
+        command << '-buildVersion'
+        command << missing_runtime.product_version.to_s.shellescape
 
         sh(command: command.join(' '), print_command: true, print_command_output: true)
       end
@@ -166,16 +163,6 @@ module Fastlane
           UI.important("Failed to import runtime #{runtime_name} with '#{import_platform_command}' :\n#{e}")
         end
       end
-
-      # def add_runtime(runtime_dmg_filename, runtime_name)
-      #   UI.message("Adding runtime #{runtime_name}...")
-      #   add_runtime_command = "xcrun simctl runtime add #{runtime_dmg_filename.shellescape}"
-      #   begin
-      #     sh(command: add_runtime_command)
-      #   rescue StandardError => e
-      #     UI.important("Failed to add runtime #{runtime_name} with '#{add_runtime_command}':\n#{e}")
-      #   end
-      # end
     end
   end
 end

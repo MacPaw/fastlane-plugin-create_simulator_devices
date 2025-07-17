@@ -42,7 +42,7 @@ module Fastlane
         if verbose
           UI.message('Matched devices:')
           matched_devices.each do |matched_device|
-            UI.message("\n\t#{matched_device.description}: #{matched_device.available_device.description}")
+            UI.message("\t#{matched_device.description}: #{matched_device.available_device.description}")
           end
         end
 
@@ -68,7 +68,12 @@ module Fastlane
 
         return [] if available_devices.nil?
 
-        available_devices.detect { |device| device.device_type_identifier == required_device.device_type.identifier }
+        # Find the device with the same name as the required device.
+        devices_with_same_type = available_devices
+          .select { |available_device| available_device.device_type_identifier == required_device.device_type.identifier }
+
+        devices_with_same_type
+          .detect { |available_device| available_device.name == required_device.device_type.name }
       end
 
       def create_missing_devices(required_devices)
@@ -82,7 +87,7 @@ module Fastlane
         UI.message('Creating missing devices')
         missing_devices.each do |missing_device|
           shell_helper.create_device(
-            missing_device.description,
+            missing_device.device_type.name,
             missing_device.device_type.identifier,
             missing_device.available_runtime.identifier
           )

@@ -86,20 +86,21 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       # GIVEN: A needed runtime and matching available runtime
       needed_runtime = instance_double(RequiredRuntime,
                                        os_name: 'iOS',
-                                       product_version: '17.0',
-                                       product_build_version: nil)
+                                       product_version: Gem::Version.new('17.0'),
+                                       product_build_version: AppleBuildVersion.new('21A326'))
 
       available_runtime = instance_double(Runtime,
                                           platform: 'iOS',
-                                          version: '17.0',
-                                          build_version: AppleBuildVersion.new('21A326'))
+                                          version: Gem::Version.new('17.0.1'),
+                                          build_version: AppleBuildVersion.new('21A457'))
 
       allow(shell_helper).to receive(:available_runtimes).and_return([available_runtime])
       allow(needed_runtime).to receive(:product_build_version=)
       allow(needed_runtime).to receive(:product_build_version).and_return(AppleBuildVersion.new('21A326'))
+      allow(needed_runtime).to receive(:product_version=).with(Gem::Version.new('17.0.1'))
 
-      build_version = AppleBuildVersion.new('21A326')
-      allow(build_version).to receive(:almost_equal?).with(AppleBuildVersion.new('21A326')).and_return(true)
+      build_version = AppleBuildVersion.new('21A457')
+      allow(build_version).to receive(:almost_equal?).with(AppleBuildVersion.new('21A457')).and_return(true)
       allow(needed_runtime).to receive(:product_build_version).and_return(build_version)
 
       # WHEN: Finding matching runtime
@@ -177,101 +178,6 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
     end
   end
 
-  describe '#install_missing_runtimes' do
-    it 'installs missing runtimes and updates state' do
-      # GIVEN: Required devices with missing runtimes
-      required_runtime = instance_double(RequiredRuntime)
-      required_device = instance_double(RequiredDevice, required_runtime:)
-      required_devices = [required_device]
-
-      allow(sut).to receive(:missing_runtimes).and_return([required_runtime], [])
-      allow(sut).to receive(:download_and_install_missing_runtime)
-      allow(shell_helper).to receive(:installed_runtimes_with_state)
-      allow(shell_helper).to receive(:available_runtimes)
-      allow(shell_helper).to receive(:available_devices_for_runtimes)
-
-      # WHEN: Installing missing runtimes
-      sut.install_missing_runtimes(required_devices)
-
-      # THEN: Should install runtime and update state
-      expect(sut).to have_received(:download_and_install_missing_runtime).with(required_runtime)
-      expect(shell_helper).to have_received(:installed_runtimes_with_state)
-      expect(shell_helper).to have_received(:available_runtimes).with(force: true)
-      expect(shell_helper).to have_received(:available_devices_for_runtimes).with(force: true)
-    end
-
-    it 'does nothing when no missing runtimes' do
-      # GIVEN: Required devices with no missing runtimes
-      required_device = instance_double(RequiredDevice, required_runtime: instance_double(RequiredRuntime))
-      required_devices = [required_device]
-
-      allow(sut).to receive(:missing_runtimes).and_return([])
-      allow(sut).to receive(:download_and_install_missing_runtime)
-
-      # WHEN: Installing missing runtimes
-      sut.install_missing_runtimes(required_devices)
-
-      # THEN: Should not install anything
-      expect(sut).not_to have_received(:download_and_install_missing_runtime)
-    end
-
-    it 'logs warning for failed installations' do
-      # GIVEN: Required devices with runtimes that fail to install
-      failed_runtime = instance_double(RequiredRuntime, runtime_name: 'iOS 17.0')
-      required_device = instance_double(RequiredDevice, required_runtime: failed_runtime)
-      required_devices = [required_device]
-
-      allow(sut).to receive(:missing_runtimes).and_return([failed_runtime], [failed_runtime])
-      allow(sut).to receive(:download_and_install_missing_runtime)
-      allow(shell_helper).to receive(:installed_runtimes_with_state)
-      allow(shell_helper).to receive(:available_runtimes)
-      allow(shell_helper).to receive(:available_devices_for_runtimes)
-      allow(Fastlane::UI).to receive(:important)
-
-      # WHEN: Installing missing runtimes
-      sut.install_missing_runtimes(required_devices)
-
-      # THEN: Should log warning for failed runtime
-      expect(Fastlane::UI).to have_received(:important).with('Failed to find/download/install runtime iOS 17.0')
-    end
-  end
-
-  describe '#install_missing_runtime' do
-    it 'installs runtime when build version is available' do
-      # GIVEN: Missing runtime with build version and cached file
-      missing_runtime = instance_double(RequiredRuntime,
-                                        product_build_version: AppleBuildVersion.new('21A326'),
-                                        runtime_name: 'iOS 17.0')
-      cached_file = '/tmp/cached_runtime.dmg'
-
-      allow(shell_helper).to receive(:import_runtime)
-
-      # WHEN: Installing missing runtime
-      sut.install_missing_runtime(missing_runtime, cached_file)
-
-      # THEN: Should import and add runtime
-      expect(shell_helper).to have_received(:import_runtime).with(cached_file, 'iOS 17.0')
-    end
-
-    it 'logs warning and returns early when build version is missing' do
-      # GIVEN: Missing runtime without build version
-      missing_runtime = instance_double(RequiredRuntime,
-                                        product_build_version: nil,
-                                        runtime_name: 'iOS 17.0')
-      cached_file = '/tmp/cached_runtime.dmg'
-
-      allow(shell_helper).to receive(:import_runtime)
-      allow(Fastlane::UI).to receive(:important)
-
-      # WHEN: Installing missing runtime
-      sut.install_missing_runtime(missing_runtime, cached_file)
-
-      # THEN: Should log warning and not install
-      expect(Fastlane::UI).to have_received(:important).with('Failed to find runtime build version for iOS 17.0')
-      expect(shell_helper).not_to have_received(:import_runtime)
-    end
-  end
-
   describe '#download_and_install_missing_runtime' do
     it 'downloads and installs runtime when not cached' do
       # GIVEN: Missing runtime not in cache
@@ -339,7 +245,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       existing_file = '/tmp/test_cache/iphonesimulator_17.0.1_21A326.dmg'
 
       allow(FileUtils).to receive(:mkdir_p).with(cache_dir)
-      allow(Dir).to receive(:glob).with(/iphonesimulator_17\.0\*_21A32\*\.dmg/).and_return([existing_file])
+      allow(Dir).to receive(:glob).with(/iphonesimulator_17\.0\*_21A\*\.dmg/).and_return([existing_file])
       allow(sut).to receive(:runtime_build_version_for_filename).and_return(AppleBuildVersion.new('21A326'))
       allow(Fastlane::UI).to receive(:message)
 

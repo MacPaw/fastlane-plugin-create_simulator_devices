@@ -74,8 +74,24 @@ module Fastlane
       def available_runtime_matching_needed_runtime?(needed_runtime)
         matching_runtimes = shell_helper.available_runtimes
           .select do |available_runtime|
-            next false if needed_runtime.os_name != available_runtime.platform ||
-                          needed_runtime.product_version != available_runtime.version
+            next false if needed_runtime.os_name != available_runtime.platform
+
+            # If the product version is not equal, check if the first two segments are equal.
+            is_product_version_equal = if needed_runtime.product_version == available_runtime.version
+                                         true
+                                       else
+                                         lhs_segments = needed_runtime.product_version.segments
+                                         rhs_segments = available_runtime.version.segments
+                                         if rhs_segments.size == 3
+                                           lhs_segments[0] == rhs_segments[0] && lhs_segments[1] == rhs_segments[1]
+                                         else
+                                           false
+                                         end
+                                       end
+            next false unless is_product_version_equal
+
+            # If the product version is not equal, use the available runtime version.
+            needed_runtime.product_version = available_runtime.version
 
             needed_runtime.product_build_version = [needed_runtime.product_build_version, available_runtime.build_version].compact.max
 
@@ -106,17 +122,6 @@ module Fastlane
         end
 
         available_runtime
-      end
-
-      def install_missing_runtime(missing_runtime, cached_runtime_file)
-        runtime_name = missing_runtime.runtime_name
-
-        if missing_runtime.product_build_version.nil?
-          UI.important("Failed to find runtime build version for #{runtime_name}")
-          return
-        end
-
-        shell_helper.import_runtime(cached_runtime_file, runtime_name)
       end
 
       def download_and_install_missing_runtime(missing_runtime)
@@ -152,8 +157,14 @@ module Fastlane
         # shipped with Xcode betas and use the same product version.
         # E.g. Xcode 26.0 Beta 3 has iOS 26.0 (23A5287e) SDK, but
         # xcodebuild downloads iphonesimulator_26.0_23A5287g.dmg as latest.
-        runtime_dmg_search_pattern += missing_runtime.product_build_version.to_s.chop if missing_runtime.product_build_version
+        runtime_dmg_search_pattern += missing_runtime.product_build_version.minor_version.to_s if missing_runtime.product_build_version
         runtime_dmg_search_pattern += '*.dmg'
+
+        if verbose
+          UI.message("Searching for #{missing_runtime.runtime_name} runtime image in #{cache_dir} with pattern: #{runtime_dmg_search_pattern}")
+          UI.message("Available dmg files: #{Dir.glob("#{cache_dir}/*.dmg")}")
+          UI.message("Available files with pattern: #{Dir.glob(runtime_dmg_search_pattern)}")
+        end
 
         runtime_file = Dir
           .glob(runtime_dmg_search_pattern)
