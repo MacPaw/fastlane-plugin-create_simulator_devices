@@ -68,7 +68,12 @@ module Fastlane
 
         return [] if available_devices.nil?
 
-        available_devices.detect { |device| device.device_type_identifier == required_device.device_type.identifier }
+        # Find the device with the same name as the required device.
+        devices_with_same_type = available_devices
+          .select { |available_device| available_device.device_type_identifier == required_device.device_type.identifier }
+
+        devices_with_same_type
+          .detect { |available_device| available_device.name == required_device.description }
       end
 
       def create_missing_devices(required_devices)
