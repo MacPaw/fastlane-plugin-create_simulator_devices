@@ -58,6 +58,8 @@ module Fastlane
 
         available_devices = shell_helper.available_devices_for_runtimes[required_device.available_runtime.identifier.to_sym]
 
+        return [] if available_devices.nil?
+
         available_devices.detect { |device| device.device_type_identifier == required_device.device_type.identifier }
       end
 
