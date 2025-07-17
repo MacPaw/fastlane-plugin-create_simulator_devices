@@ -2,7 +2,7 @@
 
 source('https://rubygems.org')
 
-ruby file: '.ruby-version'
+ruby '3.1'
 
 # Provides a consistent environment for Ruby projects by tracking and installing exact gem versions.
 gem 'bundler'
