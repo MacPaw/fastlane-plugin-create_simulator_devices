@@ -1,0 +1,9 @@
+[settings]
+# Use the idiomatic version files.
+# Used for .ruby-version, .nvmrc, etc.
+idiomatic_version_file = true
+
+# A list of tools to install if there is an idiomatic version file.
+# Don't put "swift" there, as it is managed by Xcode.
+# Unless you want to use a custom version of Swift.
+idiomatic_version_file_enable_tools = ["ruby"]

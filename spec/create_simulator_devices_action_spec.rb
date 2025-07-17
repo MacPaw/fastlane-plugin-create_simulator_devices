@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # describe Fastlane::Actions::CreateSimulatorDevicesAction do
 #   describe '#run' do
 #     it 'prints a message' do
