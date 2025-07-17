@@ -18,6 +18,10 @@ module Fastlane
           available
         end
 
+        def description
+          "#{name} (#{device_type_identifier}, #{udid})"
+        end
+
         def self.from_hash(hash)
           new(
             name: hash[:name],
