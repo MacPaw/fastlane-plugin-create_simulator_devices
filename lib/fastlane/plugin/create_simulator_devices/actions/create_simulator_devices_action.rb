@@ -29,9 +29,9 @@ module Fastlane
         runtime_helper = CreateSimulatorDevices::RuntimeHelper.new(cache_dir: params[:cache_dir], shell_helper:, verbose:)
 
         runner = CreateSimulatorDevices::Runner.new(
-          runtime_helper:,
-          shell_helper:,
-          verbose:
+          runtime_helper: runtime_helper,
+          shell_helper: shell_helper,
+          verbose: verbose
         )
 
         available_simulator_devices = runner.run(required_devices)
@@ -94,9 +94,7 @@ module Fastlane
         ['nekrich']
       end
 
-      # rubocop:disable Naming/PredicateName
-      def self.is_supported?(_platform)
-        # rubocop:enable Naming/PredicateName
+      def self.is_supported?(_platform) # rubocop:disable Naming/PredicatePrefix
         true
       end
     end

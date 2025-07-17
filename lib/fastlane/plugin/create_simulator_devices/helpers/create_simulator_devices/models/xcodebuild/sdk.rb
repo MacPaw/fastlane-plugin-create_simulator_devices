@@ -31,7 +31,7 @@ module Fastlane
             platform_version: Gem::Version.new(hash[:platformVersion]),
             sdk_version: Gem::Version.new(hash[:sdkVersion]),
             product_name: hash[:productName],
-            product_version: product_version, # rubocop:disable Style/HashSyntax
+            product_version: product_version,
             product_build_version: AppleBuildVersion.new(hash[:productBuildVersion])
           )
         end
