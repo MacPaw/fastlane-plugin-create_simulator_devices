@@ -108,17 +108,6 @@ module Fastlane
         available_runtime
       end
 
-      def install_missing_runtime(missing_runtime, cached_runtime_file)
-        runtime_name = missing_runtime.runtime_name
-
-        if missing_runtime.product_build_version.nil?
-          UI.important("Failed to find runtime build version for #{runtime_name}")
-          return
-        end
-
-        shell_helper.import_runtime(cached_runtime_file, runtime_name)
-      end
-
       def download_and_install_missing_runtime(missing_runtime)
         UI.message("Attempting to install #{missing_runtime.runtime_name} runtime.")
 
