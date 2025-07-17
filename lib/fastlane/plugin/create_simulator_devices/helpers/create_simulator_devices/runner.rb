@@ -38,7 +38,15 @@ module Fastlane
         # Return distinct matched devices strings
         matched_devices = required_devices
           .reject { |required_device| required_device.available_device.nil? }
-          .map(&:description)
+
+        if verbose
+          UI.message('Matched devices:')
+          matched_devices.each do |matched_device|
+            UI.message("\n\t#{matched_device.description}: #{matched_device.available_device.description}")
+          end
+        end
+
+        matched_devices.map!(&:description)
 
         UI.user_error!('No available devices found') if matched_devices.empty?
 
