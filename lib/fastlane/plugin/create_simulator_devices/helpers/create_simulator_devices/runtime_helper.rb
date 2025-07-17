@@ -155,6 +155,12 @@ module Fastlane
         runtime_dmg_search_pattern += missing_runtime.product_build_version.to_s.chop if missing_runtime.product_build_version
         runtime_dmg_search_pattern += '*.dmg'
 
+        if verbose
+          UI.message("Searching for #{missing_runtime.runtime_name} runtime image in #{cache_dir} with pattern: #{runtime_dmg_search_pattern}")
+          UI.message("Available dmg files: #{Dir.glob("#{cache_dir}/*.dmg")}")
+          UI.message("Available files with pattern: #{Dir.glob(runtime_dmg_search_pattern)}")
+        end
+
         runtime_file = Dir
           .glob(runtime_dmg_search_pattern)
           .max_by { |filename| runtime_build_version_for_filename(filename) }
