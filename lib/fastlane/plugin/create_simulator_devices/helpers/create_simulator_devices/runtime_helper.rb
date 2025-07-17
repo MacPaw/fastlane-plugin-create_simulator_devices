@@ -35,6 +35,7 @@ module Fastlane
         end
 
         shell_helper.available_runtimes(force: true)
+        shell_helper.available_devices_for_runtimes(force: true)
       end
 
       def install_missing_runtimes(required_devices)
@@ -51,6 +52,7 @@ module Fastlane
         # Update available_runtimes after installing the runtimes.
         shell_helper.installed_runtimes_with_state
         shell_helper.available_runtimes(force: true)
+        shell_helper.available_devices_for_runtimes(force: true)
 
         # Check if missing runtimes are available after installing
         missing_runtimes = missing_runtimes(missing_runtimes)

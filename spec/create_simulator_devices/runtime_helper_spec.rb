@@ -49,6 +49,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       allow(shell_helper).to receive(:installed_runtimes_with_state).and_return(runtimes)
       allow(shell_helper).to receive(:delete_runtime)
       allow(shell_helper).to receive(:available_runtimes)
+      allow(shell_helper).to receive(:available_devices_for_runtimes)
 
       # WHEN: Deleting unusable runtimes
       sut.delete_unusable_runtimes
@@ -58,6 +59,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       expect(shell_helper).not_to have_received(:delete_runtime).with('usable-runtime')
       expect(shell_helper).not_to have_received(:delete_runtime).with('unusable-not-deletable')
       expect(shell_helper).to have_received(:available_runtimes).with(force: true)
+      expect(shell_helper).to have_received(:available_devices_for_runtimes).with(force: true)
     end
   end
 
@@ -186,6 +188,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       allow(sut).to receive(:download_and_install_missing_runtime)
       allow(shell_helper).to receive(:installed_runtimes_with_state)
       allow(shell_helper).to receive(:available_runtimes)
+      allow(shell_helper).to receive(:available_devices_for_runtimes)
 
       # WHEN: Installing missing runtimes
       sut.install_missing_runtimes(required_devices)
@@ -194,6 +197,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       expect(sut).to have_received(:download_and_install_missing_runtime).with(required_runtime)
       expect(shell_helper).to have_received(:installed_runtimes_with_state)
       expect(shell_helper).to have_received(:available_runtimes).with(force: true)
+      expect(shell_helper).to have_received(:available_devices_for_runtimes).with(force: true)
     end
 
     it 'does nothing when no missing runtimes' do
@@ -221,6 +225,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       allow(sut).to receive(:download_and_install_missing_runtime)
       allow(shell_helper).to receive(:installed_runtimes_with_state)
       allow(shell_helper).to receive(:available_runtimes)
+      allow(shell_helper).to receive(:available_devices_for_runtimes)
       allow(Fastlane::UI).to receive(:important)
 
       # WHEN: Installing missing runtimes
