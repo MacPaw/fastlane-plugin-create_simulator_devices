@@ -336,10 +336,10 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
                                         product_build_version: AppleBuildVersion.new('21A326'),
                                         runtime_name: 'iOS 17.0')
 
-      existing_file = '/tmp/test_cache/iphonesimulator_17.0_21A326.dmg'
+      existing_file = '/tmp/test_cache/iphonesimulator_17.0.1_21A326.dmg'
 
       allow(FileUtils).to receive(:mkdir_p).with(cache_dir)
-      allow(Dir).to receive(:glob).with(/iphonesimulator_17\.0_21A32.*\.dmg/).and_return([existing_file])
+      allow(Dir).to receive(:glob).with(/iphonesimulator_17\.0\*_21A32\*\.dmg/).and_return([existing_file])
       allow(sut).to receive(:runtime_build_version_for_filename).and_return(AppleBuildVersion.new('21A326'))
       allow(Fastlane::UI).to receive(:message)
 

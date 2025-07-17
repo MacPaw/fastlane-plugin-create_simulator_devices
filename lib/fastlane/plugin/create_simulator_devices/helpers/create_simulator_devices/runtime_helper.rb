@@ -145,7 +145,7 @@ module Fastlane
       def cached_runtime_file(missing_runtime)
         FileUtils.mkdir_p(cache_dir)
 
-        runtime_dmg_search_pattern = "#{cache_dir}/#{missing_runtime.sdk_platform}_#{missing_runtime.product_version}_"
+        runtime_dmg_search_pattern = "#{cache_dir}/#{missing_runtime.sdk_platform}_#{missing_runtime.product_version}*_"
 
         # Remove the last character of the build version if it is the latest beta.
         # Apple can create a new Runtime version and block product build version
