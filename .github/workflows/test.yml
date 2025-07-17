@@ -1,7 +1,15 @@
 name: Test
 
+permissions:
+  contents: read
+
 on:
-  push:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    branches:
+      - main
 
 jobs:
   test:
@@ -15,11 +23,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gem-
     - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
+      uses: ruby/setup-ruby@472790540115ce5bd69d399a020189a8c87d641f
       with:
         ruby-version: 3.1.1
     - name: Install dependencies
-      run: bundle check || bundle install --jobs=4 --retry=3 --path vendor/bundle
+      run: bundle check || bundle install --jobs=4 --retry=3
     - name: Run tests
       run: bundle exec rake
     - name: Upload artifact
