@@ -73,7 +73,7 @@ module Fastlane
           .select { |available_device| available_device.device_type_identifier == required_device.device_type.identifier }
 
         devices_with_same_type
-          .detect { |available_device| available_device.name == required_device.description }
+          .detect { |available_device| available_device.name == required_device.device_type.name }
       end
 
       def create_missing_devices(required_devices)
@@ -87,7 +87,7 @@ module Fastlane
         UI.message('Creating missing devices')
         missing_devices.each do |missing_device|
           shell_helper.create_device(
-            missing_device.description,
+            missing_device.device_type.name,
             missing_device.device_type.identifier,
             missing_device.available_runtime.identifier
           )
