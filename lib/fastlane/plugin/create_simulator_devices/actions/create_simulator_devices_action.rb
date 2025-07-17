@@ -70,11 +70,13 @@ module Fastlane
           ::FastlaneCore::ConfigItem.new(key: :cache_dir,
                                          description: 'The directory to cache the simulator runtimes',
                                          is_string: true,
+                                         optional: true,
                                          default_value: "#{Dir.home}/.cache/create_simulator_devices"),
           ::FastlaneCore::ConfigItem.new(key: :verbose,
                                          env_name: 'VERBOSE',
                                          description: 'Verbose output',
                                          is_string: false,
+                                         optional: true,
                                          default_value: ::FastlaneCore::Globals.verbose?,
                                          default_value_dynamic: true)
         ]
