@@ -42,7 +42,7 @@ module Fastlane
         if verbose
           UI.message('Matched devices:')
           matched_devices.each do |matched_device|
-            UI.message("\n\t#{matched_device.description}: #{matched_device.available_device.description}")
+            UI.message("\t#{matched_device.description}: #{matched_device.available_device.description}")
           end
         end
 
