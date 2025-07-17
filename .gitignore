@@ -1,0 +1,19 @@
+.DS_Store
+
+*.gem
+Gemfile.lock
+
+## Documentation cache and generated files:
+/.yardoc/
+/_yardoc/
+/doc/
+/rdoc/
+coverage
+test-results
+
+## fastlane
+fastlane/README.md
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output

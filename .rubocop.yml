@@ -1,0 +1,62 @@
+---
+require:
+- rubocop/require_tools
+- rubocop-performance
+AllCops:
+  TargetRubyVersion: 3.1
+  NewCops: enable
+  SuggestExtensions: false
+  Include:
+    - '**/*.rb'
+    - "**/*.gemspec"
+    - 'Gemfile'
+  Exclude:
+    - "./vendor/**/*"
+    - "**/.build"
+    - "**/.swiftpm"
+    - "**/Build"
+    - "**/Derived"
+    - "**/DerivedData"
+
+Metrics/BlockLength:
+  Max: 20
+  Exclude:
+    - '**/*_spec.rb'
+
+Naming/FileName:
+  Exclude:
+    - '**/Dangerfile_spec.rb'
+
+Style/Documentation:
+  Exclude:
+    - '**/*_spec.rb'
+
+Metrics/MethodLength:
+  Max: 40
+
+Lint/ConstantDefinitionInBlock:
+  Exclude:
+    - '**/*_spec.rb'
+
+Metrics/AbcSize:
+  Max: 40
+  AllowedMethods:
+    - check_changelog
+    - downloaded_artifacts_locations
+
+Metrics/CyclomaticComplexity:
+  Max: 20
+
+Metrics/PerceivedComplexity:
+  Max: 20
+
+Layout/LineLength:
+  Max: 250
+  AllowedPatterns:
+    - downloaded_artifacts_locations
+
+Metrics/ClassLength:
+  Max: 150
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented

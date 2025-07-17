@@ -1,0 +1,8 @@
+lane :test do
+  devices_list = create_simulator_devices(
+    devices: ['iPhone 16e', 'iPhone 15 (18.5)'],
+    cache_dir: "#{Dir.home}/.cache/create_simulator_devices",
+    verbose: false
+  )
+  UI.message("Devices list: #{devices_list}")
+end
