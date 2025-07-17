@@ -86,17 +86,18 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       # GIVEN: A needed runtime and matching available runtime
       needed_runtime = instance_double(RequiredRuntime,
                                        os_name: 'iOS',
-                                       product_version: '17.0',
+                                       product_version: Gem::Version.new('17.0'),
                                        product_build_version: nil)
 
       available_runtime = instance_double(Runtime,
                                           platform: 'iOS',
-                                          version: '17.0',
+                                          version: Gem::Version.new('17.0.1'),
                                           build_version: AppleBuildVersion.new('21A326'))
 
       allow(shell_helper).to receive(:available_runtimes).and_return([available_runtime])
       allow(needed_runtime).to receive(:product_build_version=)
       allow(needed_runtime).to receive(:product_build_version).and_return(AppleBuildVersion.new('21A326'))
+      allow(needed_runtime).to receive(:product_version=).with(Gem::Version.new('17.0.1'))
 
       build_version = AppleBuildVersion.new('21A326')
       allow(build_version).to receive(:almost_equal?).with(AppleBuildVersion.new('21A326')).and_return(true)

@@ -74,8 +74,24 @@ module Fastlane
       def available_runtime_matching_needed_runtime?(needed_runtime)
         matching_runtimes = shell_helper.available_runtimes
           .select do |available_runtime|
-            next false if needed_runtime.os_name != available_runtime.platform ||
-                          needed_runtime.product_version != available_runtime.version
+            next false if needed_runtime.os_name != available_runtime.platform
+
+            # If the product version is not equal, check if the first two segments are equal.
+            is_product_version_equal = if needed_runtime.product_version == available_runtime.version
+                                         true
+                                       else
+                                         lhs_segments = needed_runtime.product_version.segments
+                                         rhs_segments = available_runtime.version.segments
+                                         if rhs_segments.size == 3
+                                           lhs_segments[0] == rhs_segments[0] && lhs_segments[1] == rhs_segments[1]
+                                         else
+                                           false
+                                         end
+                                       end
+            next false unless is_product_version_equal
+
+            # If the product version is not equal, use the available runtime version.
+            needed_runtime.product_version = available_runtime.version
 
             needed_runtime.product_build_version = [needed_runtime.product_build_version, available_runtime.build_version].compact.max
 
