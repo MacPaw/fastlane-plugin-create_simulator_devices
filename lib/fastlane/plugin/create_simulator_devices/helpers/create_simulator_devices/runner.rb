@@ -18,6 +18,8 @@ module Fastlane
       end
 
       def run(devices)
+        UI.message("Simulator devices to create: #{devices.join(', ')}")
+
         shell_helper.stop_core_simulator_services
 
         # Delete unusable runtimes and unavailable devices.
@@ -29,6 +31,11 @@ module Fastlane
           .filter_map { |device| required_device_for_device(device) }
           .uniq { |required_device| [required_device.device_type.name, required_device.required_runtime.product_version] }
 
+        if verbose
+          UI.message('Unique required devices:')
+          UI.message("  #{required_devices.map(&:description).join("\n  ")}")
+        end
+
         # Install missing runtimes if needed.
         runtime_helper.install_missing_runtimes(required_devices)
 
@@ -39,18 +46,25 @@ module Fastlane
         matched_devices = required_devices
           .reject { |required_device| required_device.available_device.nil? }
 
-        if verbose
-          UI.message('Matched devices:')
-          matched_devices.each do |matched_device|
-            UI.message("\t#{matched_device.description}: #{matched_device.available_device.description}")
-          end
-        end
+        log_matched_devices
 
         matched_devices.map!(&:description)
 
         UI.user_error!('No available devices found') if matched_devices.empty?
 
         matched_devices
+      end
+
+      def log_matched_devices
+        UI.message('Matched devices:')
+        matched_devices.each do |matched_device|
+          device_info = ''
+          if verbose
+            device_info = shell_helper.device_info_by_udid(matched_device.available_device.udid)
+            device_info = "\n#{device_info}"
+          end
+          UI.message("  #{matched_device.description}: #{matched_device.available_device.description}#{device_info}")
+        end
       end
 
       def delete_unavailable_devices
@@ -82,7 +96,10 @@ module Fastlane
         missing_devices = required_devices
           .select { |required_device| required_device.available_device.nil? }
 
-        return if missing_devices.empty?
+        if missing_devices.empty?
+          UI.message('All required devices are present. Skipping device creation...') if verbose
+          return
+        end
 
         UI.message('Creating missing devices')
         missing_devices.each do |missing_device|
@@ -118,9 +135,11 @@ module Fastlane
       def required_device_for_device(device)
         available_device_types = shell_helper.available_device_types
 
+        device_os_version = device[/ \(([\d.]*?)\)$/, 1]
+        device_name = device.delete_suffix(" (#{device_os_version})").strip unless device_os_version.nil?
+
         device_type = available_device_types.detect do |available_device_type|
-          # Avoid matching "iPhone 16" for the "iPhone 16e" device.
-          "#{device} ".start_with?("#{available_device_type.name} ")
+          device_name == available_device_type.name
         end
 
         unless device_type
@@ -131,8 +150,6 @@ module Fastlane
         product_family = device_type.product_family
 
         os_name = PRODUCT_FAMILY_TO_OS_NAME[product_family]
-        device_os_version = device.delete_prefix(device_type.name).strip
-        device_os_version = device_os_version[/\(([\d.]*?)\)/, 1]
 
         runtime_version = nil
         unless device_os_version.nil? || device_os_version.empty?

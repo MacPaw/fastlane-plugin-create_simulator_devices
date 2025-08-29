@@ -6,7 +6,7 @@ require 'rspec'
 RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
   AppleBuildVersion = Fastlane::CreateSimulatorDevices::AppleBuildVersion
   RequiredRuntime = Fastlane::CreateSimulatorDevices::RequiredRuntime
-  let(:sut) { described_class.new(verbose: false) }
+  let(:sut) { described_class.new(print_command: false, print_command_output: false) }
   before do
     # Mock the sh method directly on the ShellHelper instance
     allow(sut).to receive(:sh)

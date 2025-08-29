@@ -10,16 +10,17 @@ module Fastlane
       UI = ::Fastlane::UI unless defined?(UI)
 
       # Proprty verbose
-      attr_accessor :verbose, :action_context
+      attr_accessor :print_command, :print_command_output, :action_context
 
-      def initialize(verbose: false, action_context: nil)
-        self.verbose = verbose
+      def initialize(print_command: false, print_command_output: false, action_context: nil)
+        self.print_command = print_command
+        self.print_command_output = print_command_output
         self.action_context = action_context
       end
 
-      def sh(command:, print_command: verbose, print_command_output: verbose)
+      def sh(command:, print_command: self.print_command, print_command_output: self.print_command_output)
         if action_context
-          action_context.sh(command, print_command:, print_command_output:)
+          action_context.sh(command, print_command: print_command, print_command_output: print_command_output)
         else
           # Fallback for testing or direct usage
           require 'open3'
@@ -162,6 +163,14 @@ module Fastlane
         rescue StandardError => e
           UI.important("Failed to import runtime #{runtime_name} with '#{import_platform_command}' :\n#{e}")
         end
+      end
+
+      def device_info_by_udid(udid)
+        sh(
+          command: "xcrun simctl list devices --json | jq '.devices | to_entries[].value[] | select(.udid==\"#{udid.shellescape}\")'",
+          print_command: false,
+          print_command_output: false
+        )
       end
     end
   end
