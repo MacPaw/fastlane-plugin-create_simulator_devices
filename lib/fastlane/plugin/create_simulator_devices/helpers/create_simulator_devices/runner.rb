@@ -144,7 +144,6 @@ module Fastlane
         product_family = device_type.product_family
 
         os_name = PRODUCT_FAMILY_TO_OS_NAME[product_family]
-        device_os_version = device.delete_prefix(device_type.name).strip
 
         runtime_version = nil
         unless device_os_version.nil? || device_os_version.empty?
