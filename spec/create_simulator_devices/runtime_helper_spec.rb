@@ -48,8 +48,8 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
 
       allow(shell_helper).to receive(:installed_runtimes_with_state).and_return(runtimes)
       allow(shell_helper).to receive(:delete_runtime)
-      allow(shell_helper).to receive(:available_runtimes)
-      allow(shell_helper).to receive(:available_devices_for_runtimes)
+      allow(shell_helper).to receive(:simctl_runtimes)
+      allow(shell_helper).to receive(:simctl_devices_for_runtimes)
 
       # WHEN: Deleting unusable runtimes
       sut.delete_unusable_runtimes
@@ -58,8 +58,8 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       expect(shell_helper).to have_received(:delete_runtime).with('unusable-runtime')
       expect(shell_helper).not_to have_received(:delete_runtime).with('usable-runtime')
       expect(shell_helper).not_to have_received(:delete_runtime).with('unusable-not-deletable')
-      expect(shell_helper).to have_received(:available_runtimes).with(force: true)
-      expect(shell_helper).to have_received(:available_devices_for_runtimes).with(force: true)
+      expect(shell_helper).to have_received(:simctl_runtimes).with(force: true)
+      expect(shell_helper).to have_received(:simctl_devices_for_runtimes).with(force: true)
     end
   end
 
@@ -70,8 +70,8 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       needed_runtime2 = instance_double(RequiredRuntime, os_name: 'iOS', product_version: '18.0')
       needed_runtimes = [needed_runtime1, needed_runtime2]
 
-      allow(sut).to receive(:available_runtime_matching_needed_runtime?).with(needed_runtime1).and_return(nil)
-      allow(sut).to receive(:available_runtime_matching_needed_runtime?).with(needed_runtime2).and_return(instance_double(Runtime))
+      allow(sut).to receive(:simctl_runtime_matching_needed_runtime?).with(needed_runtime1).and_return(nil)
+      allow(sut).to receive(:simctl_runtime_matching_needed_runtime?).with(needed_runtime2).and_return(instance_double(Runtime))
 
       # WHEN: Finding missing runtimes
       result = sut.missing_runtimes(needed_runtimes)
@@ -81,7 +81,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
     end
   end
 
-  describe '#available_runtime_matching_needed_runtime?' do
+  describe '#simctl_runtime_matching_needed_runtime?' do
     it 'returns matching runtime when found' do
       # GIVEN: A needed runtime and matching available runtime
       needed_runtime = instance_double(RequiredRuntime,
@@ -89,12 +89,12 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
                                        product_version: Gem::Version.new('17.0'),
                                        product_build_version: AppleBuildVersion.new('21A326'))
 
-      available_runtime = instance_double(Runtime,
-                                          platform: 'iOS',
-                                          version: Gem::Version.new('17.0.1'),
-                                          build_version: AppleBuildVersion.new('21A457'))
+      simctl_runtime = instance_double(Runtime,
+                                       platform: 'iOS',
+                                       version: Gem::Version.new('17.0.1'),
+                                       build_version: AppleBuildVersion.new('21A457'))
 
-      allow(shell_helper).to receive(:available_runtimes).and_return([available_runtime])
+      allow(shell_helper).to receive(:simctl_runtimes).and_return([simctl_runtime])
       allow(needed_runtime).to receive(:product_build_version=)
       allow(needed_runtime).to receive(:product_build_version).and_return(AppleBuildVersion.new('21A326'))
       allow(needed_runtime).to receive(:product_version=).with(Gem::Version.new('17.0.1'))
@@ -104,28 +104,28 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       allow(needed_runtime).to receive(:product_build_version).and_return(build_version)
 
       # WHEN: Finding matching runtime
-      result = sut.available_runtime_matching_needed_runtime?(needed_runtime)
+      result = sut.simctl_runtime_matching_needed_runtime?(needed_runtime)
 
       # THEN: Should return the matching runtime
-      expect(result).to eq(available_runtime)
+      expect(result).to eq(simctl_runtime)
     end
 
     it 'returns nil when no matching runtime found' do
       # GIVEN: A needed runtime with no matching available runtime
       needed_runtime = instance_double(RequiredRuntime, os_name: 'iOS', product_version: '17.0')
-      available_runtime = instance_double(Runtime, platform: 'watchOS', version: '10.0')
+      simctl_runtime = instance_double(Runtime, platform: 'watchOS', version: '10.0')
 
-      allow(shell_helper).to receive(:available_runtimes).and_return([available_runtime])
+      allow(shell_helper).to receive(:simctl_runtimes).and_return([simctl_runtime])
 
       # WHEN: Finding matching runtime
-      result = sut.available_runtime_matching_needed_runtime?(needed_runtime)
+      result = sut.simctl_runtime_matching_needed_runtime?(needed_runtime)
 
       # THEN: Should return nil
       expect(result).to be_nil
     end
   end
 
-  describe '#available_runtime_for_required_device' do
+  describe '#simctl_runtime_for_required_device' do
     let(:device_type) { instance_double(DeviceType, name: 'iPhone 15', identifier: 'com.apple.CoreSimulator.SimDeviceType.iPhone-15') }
     let(:required_runtime) { instance_double(RequiredRuntime, description: 'iOS 17.0') }
     let(:required_device) { instance_double(RequiredDevice, required_runtime:, device_type:, description: 'iPhone 15 (17.0)') }
@@ -133,26 +133,26 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
     it 'returns available runtime when device type is supported' do
       # GIVEN: A required device with supported device type
       supported_device_type = instance_double(Runtime_SupportedDeviceType, identifier: 'com.apple.CoreSimulator.SimDeviceType.iPhone-15')
-      available_runtime = instance_double(Runtime,
-                                          identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-17-0',
-                                          supported_device_types: [supported_device_type])
+      simctl_runtime = instance_double(Runtime,
+                                       identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-17-0',
+                                       supported_device_types: [supported_device_type])
 
-      allow(sut).to receive(:available_runtime_matching_needed_runtime?).with(required_runtime).and_return(available_runtime)
+      allow(sut).to receive(:simctl_runtime_matching_needed_runtime?).with(required_runtime).and_return(simctl_runtime)
 
       # WHEN: Finding available runtime for required device
-      result = sut.available_runtime_for_required_device(required_device)
+      result = sut.simctl_runtime_for_required_device(required_device)
 
       # THEN: Should return the available runtime
-      expect(result).to eq(available_runtime)
+      expect(result).to eq(simctl_runtime)
     end
 
     it 'returns nil when runtime is not found' do
       # GIVEN: A required device with no matching runtime
-      allow(sut).to receive(:available_runtime_matching_needed_runtime?).with(required_runtime).and_return(nil)
+      allow(sut).to receive(:simctl_runtime_matching_needed_runtime?).with(required_runtime).and_return(nil)
       allow(Fastlane::UI).to receive(:important)
 
       # WHEN: Finding available runtime for required device
-      result = sut.available_runtime_for_required_device(required_device)
+      result = sut.simctl_runtime_for_required_device(required_device)
 
       # THEN: Should return nil and log warning
       expect(result).to be_nil
@@ -162,15 +162,15 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
     it 'returns nil when device type is not supported by runtime' do
       # GIVEN: A required device with unsupported device type
       supported_device_type = instance_double(Runtime_SupportedDeviceType, identifier: 'com.apple.CoreSimulator.SimDeviceType.iPhone-14')
-      available_runtime = instance_double(Runtime,
-                                          identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-17-0',
-                                          supported_device_types: [supported_device_type])
+      simctl_runtime = instance_double(Runtime,
+                                       identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-17-0',
+                                       supported_device_types: [supported_device_type])
 
-      allow(sut).to receive(:available_runtime_matching_needed_runtime?).with(required_runtime).and_return(available_runtime)
+      allow(sut).to receive(:simctl_runtime_matching_needed_runtime?).with(required_runtime).and_return(simctl_runtime)
       allow(Fastlane::UI).to receive(:important)
 
       # WHEN: Finding available runtime for required device
-      result = sut.available_runtime_for_required_device(required_device)
+      result = sut.simctl_runtime_for_required_device(required_device)
 
       # THEN: Should return nil and log warning
       expect(result).to be_nil
@@ -287,7 +287,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
                             product_version: Gem::Version.new('17.2'),
                             product_build_version: AppleBuildVersion.new('21C52'))
 
-      allow(sut).to receive(:max_available_simulator_sdks).and_return({ 'iOS' => sdk })
+      allow(sut).to receive(:max_xcodebuild_simulator_sdks).and_return({ 'iOS' => sdk })
       allow(RequiredRuntime).to receive(:new).and_return(instance_double(RequiredRuntime))
       allow(AppleBuildVersion).to receive(:new).with('21C52').and_return(AppleBuildVersion.new('21C52'))
 
@@ -314,7 +314,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
                             platform: 'iphonesimulator',
                             product_version: Gem::Version.new('17.2'))
 
-      allow(sut).to receive(:max_available_simulator_sdks).and_return({ 'iOS' => sdk })
+      allow(sut).to receive(:max_xcodebuild_simulator_sdks).and_return({ 'iOS' => sdk })
       allow(Fastlane::UI).to receive(:important)
 
       # WHEN: Creating required runtime
@@ -333,7 +333,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
                             product_version: Gem::Version.new('17.2'),
                             product_build_version: AppleBuildVersion.new('21C52'))
 
-      allow(sut).to receive(:max_available_simulator_sdks).and_return({ 'iOS' => sdk })
+      allow(sut).to receive(:max_xcodebuild_simulator_sdks).and_return({ 'iOS' => sdk })
       allow(RequiredRuntime).to receive(:new).and_return(instance_double(RequiredRuntime))
 
       build_version = AppleBuildVersion.new('21C52')
@@ -353,14 +353,14 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
     end
   end
 
-  describe '#max_available_simulator_sdks' do
+  describe '#max_xcodebuild_simulator_sdks' do
     it 'returns cached result on subsequent calls' do
       # GIVEN: Already cached SDK data
       cached_sdks = { 'iOS' => instance_double(Xcodebuild_SDK) }
-      sut.instance_variable_set(:@max_available_simulator_sdks, cached_sdks)
+      sut.instance_variable_set(:@max_xcodebuild_simulator_sdks, cached_sdks)
 
-      # WHEN: Calling max_available_simulator_sdks
-      result = sut.max_available_simulator_sdks
+      # WHEN: Calling max_xcodebuild_simulator_sdks
+      result = sut.max_xcodebuild_simulator_sdks
 
       # THEN: Should return cached result
       expect(result).to eq(cached_sdks)
@@ -379,10 +379,10 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
                                   product_version: Gem::Version.new('14.2'))
 
       all_sdks = [ios_sdk, tvos_sdk, macos_sdk]
-      allow(shell_helper).to receive(:available_sdks).and_return(all_sdks)
+      allow(shell_helper).to receive(:xcodebuild_sdks).and_return(all_sdks)
 
-      # WHEN: Calling max_available_simulator_sdks
-      result = sut.max_available_simulator_sdks
+      # WHEN: Calling max_xcodebuild_simulator_sdks
+      result = sut.max_xcodebuild_simulator_sdks
 
       # THEN: Should return filtered and organized SDK data
       expect(result).to be_a(Hash)
@@ -401,10 +401,10 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
                                     product_version: Gem::Version.new('17.2'))
 
       all_sdks = [ios_sdk_old, ios_sdk_new]
-      allow(shell_helper).to receive(:available_sdks).and_return(all_sdks)
+      allow(shell_helper).to receive(:xcodebuild_sdks).and_return(all_sdks)
 
-      # WHEN: Calling max_available_simulator_sdks
-      result = sut.max_available_simulator_sdks
+      # WHEN: Calling max_xcodebuild_simulator_sdks
+      result = sut.max_xcodebuild_simulator_sdks
 
       # THEN: Should return the newer SDK version
       expect(result['iOS']).to eq(ios_sdk_new)

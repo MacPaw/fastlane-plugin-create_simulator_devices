@@ -46,14 +46,16 @@ module Fastlane
 
         # Return distinct matched devices strings
         matched_devices = required_devices
-          .reject { |required_device| required_device.available_device.nil? }
+          .reject { |required_device| required_device.simctl_device.nil? }
 
         log_matched_devices(matched_devices: matched_devices)
 
-        available_simulator_devices = matched_devices.map(&:available_device)
-        Actions.lane_context[Actions::SharedValues::AVAILABLE_SIMULATOR_DEVICES] = available_simulator_devices
+        Actions.lane_context[Actions::SharedValues::AVAILABLE_SIMULATOR_DEVICES] = matched_devices
 
-        matched_devices.map(&:description)
+        matched_devices_names = matched_devices.map(&:description)
+        UI.message("Available simulator devices: #{matched_devices_names.join(', ')}")
+
+        matched_devices_names
       end
 
       def log_matched_devices(matched_devices:)
@@ -63,44 +65,41 @@ module Fastlane
         matched_devices.each do |matched_device|
           device_info = ''
           if verbose
-            device_info = shell_helper.device_info_by_udid(matched_device.available_device.udid)
+            device_info = shell_helper.device_info_by_udid(matched_device.simctl_device.udid)
             device_info = "\n#{device_info}"
           end
-          UI.message("  #{matched_device.description}: #{matched_device.available_device.description}#{device_info}")
+          UI.message("  #{matched_device.description}: #{matched_device.simctl_device.description}#{device_info}")
         end
-
-        matched_devices_names = matched_devices.map(&:description).join(', ')
-        UI.message("Available simulator devices: #{matched_devices_names}")
       end
 
       def delete_unavailable_devices
-        return unless shell_helper.available_devices_for_runtimes.values.flatten.any?(&:available?)
+        return unless shell_helper.simctl_devices_for_runtimes.values.flatten.any?(&:available?)
 
         shell_helper.delete_unavailable_devices
 
-        shell_helper.available_devices_for_runtimes(force: true)
+        shell_helper.simctl_devices_for_runtimes(force: true)
       end
 
-      def available_device_for_required_device(required_device)
-        return nil if required_device.available_runtime.nil?
+      def simctl_device_for_required_device(required_device)
+        return nil if required_device.simctl_runtime.nil?
 
-        available_devices = shell_helper.available_devices_for_runtimes[required_device.available_runtime.identifier.to_sym]
+        simctl_devices = shell_helper.simctl_devices_for_runtimes[required_device.simctl_runtime.identifier.to_sym]
 
-        return [] if available_devices.nil?
+        return [] if simctl_devices.nil?
 
         # Find the device with the same name as the required device.
-        devices_with_same_type = available_devices
-          .select { |available_device| available_device.device_type_identifier == required_device.device_type.identifier }
+        devices_with_same_type = simctl_devices
+          .select { |simctl_device| simctl_device.device_type_identifier == required_device.device_type.identifier }
 
         devices_with_same_type
-          .detect { |available_device| available_device.name == required_device.device_type.name }
+          .detect { |simctl_device| simctl_device.name == required_device.device_type.name }
       end
 
       def create_missing_devices(required_devices)
         find_runtime_and_device_for_required_devices(required_devices)
 
         missing_devices = required_devices
-          .select { |required_device| required_device.available_device.nil? }
+          .select { |required_device| required_device.simctl_device.nil? }
 
         if missing_devices.empty?
           UI.message('All required devices are present. Skipping device creation...') if verbose
@@ -112,11 +111,11 @@ module Fastlane
           shell_helper.create_device(
             missing_device.device_type.name,
             missing_device.device_type.identifier,
-            missing_device.available_runtime.identifier
+            missing_device.simctl_runtime.identifier
           )
         end
 
-        shell_helper.available_devices_for_runtimes(force: true)
+        shell_helper.simctl_devices_for_runtimes(force: true)
 
         find_runtime_and_device_for_required_devices(missing_devices)
       end
@@ -124,8 +123,8 @@ module Fastlane
       def find_runtime_and_device_for_required_devices(required_devices)
         UI.message('Searching for matching available devices...')
         required_devices.each do |required_device|
-          required_device.available_runtime = runtime_helper.available_runtime_for_required_device(required_device)
-          required_device.available_device = available_device_for_required_device(required_device)
+          required_device.simctl_runtime = runtime_helper.simctl_runtime_for_required_device(required_device)
+          required_device.simctl_device = simctl_device_for_required_device(required_device)
         end
       end
 
@@ -139,17 +138,17 @@ module Fastlane
       }.freeze
 
       def required_device_for_device(device)
-        available_device_types = shell_helper.available_device_types
+        simctl_device_types = shell_helper.simctl_device_types
 
         device_os_version = device[/ \(([\d.]*?)\)$/, 1]
         device_name = device_os_version.nil? ? device : device.delete_suffix(" (#{device_os_version})").strip
 
-        device_type = available_device_types.detect do |available_device_type|
-          device_name == available_device_type.name
+        device_type = simctl_device_types.detect do |simctl_device_type|
+          device_name == simctl_device_type.name
         end
 
         unless device_type
-          UI.important("Device type not found for device #{device}. Available device types: #{available_device_types.map(&:name).join(', ')}.")
+          UI.important("Device type not found for device #{device}. Available device types: #{simctl_device_types.map(&:name).join(', ')}.")
           return nil
         end
 
@@ -168,8 +167,8 @@ module Fastlane
           device_type:,
           os_name:,
           required_runtime: nil,
-          available_runtime: nil,
-          available_device: nil
+          simctl_runtime: nil,
+          simctl_device: nil
         )
 
         required_device.required_runtime = runtime_helper.required_runtime_for_device(required_device, runtime_version)

@@ -35,8 +35,8 @@ module Fastlane
           shell_helper.delete_runtime(runtime.identifier)
         end
 
-        shell_helper.available_runtimes(force: true)
-        shell_helper.available_devices_for_runtimes(force: true)
+        shell_helper.simctl_runtimes(force: true)
+        shell_helper.simctl_devices_for_runtimes(force: true)
       end
 
       def install_missing_runtimes(required_devices)
@@ -53,10 +53,10 @@ module Fastlane
           download_and_install_missing_runtime(missing_runtime)
         end
 
-        # Update available_runtimes after installing the runtimes.
+        # Update simctl_runtimes after installing the runtimes.
         shell_helper.installed_runtimes_with_state
-        shell_helper.available_runtimes(force: true)
-        shell_helper.available_devices_for_runtimes(force: true)
+        shell_helper.simctl_runtimes(force: true)
+        shell_helper.simctl_devices_for_runtimes(force: true)
 
         # Check if missing runtimes are available after installing
         missing_runtimes = missing_runtimes(missing_runtimes)
@@ -71,21 +71,21 @@ module Fastlane
       def missing_runtimes(needed_runtimes)
         needed_runtimes.select do |needed_runtime|
           # Check if available runtimes contain the needed runtime.
-          available_runtime_matching_needed_runtime?(needed_runtime).nil?
+          simctl_runtime_matching_needed_runtime?(needed_runtime).nil?
         end
       end
 
-      def available_runtime_matching_needed_runtime?(needed_runtime)
-        matching_runtimes = shell_helper.available_runtimes
-          .select do |available_runtime|
-            next false if needed_runtime.os_name != available_runtime.platform
+      def simctl_runtime_matching_needed_runtime?(needed_runtime)
+        matching_runtimes = shell_helper.simctl_runtimes
+          .select do |simctl_runtime|
+            next false if needed_runtime.os_name != simctl_runtime.platform
 
             # If the product version is not equal, check if the first two segments are equal.
-            is_product_version_equal = if needed_runtime.product_version == available_runtime.version
+            is_product_version_equal = if needed_runtime.product_version == simctl_runtime.version
                                          true
                                        else
                                          lhs_segments = needed_runtime.product_version.segments
-                                         rhs_segments = available_runtime.version.segments
+                                         rhs_segments = simctl_runtime.version.segments
                                          if rhs_segments.size == 3
                                            lhs_segments[0] == rhs_segments[0] && lhs_segments[1] == rhs_segments[1]
                                          else
@@ -95,37 +95,37 @@ module Fastlane
             next false unless is_product_version_equal
 
             # If the product version is not equal, use the available runtime version.
-            needed_runtime.product_version = available_runtime.version
+            needed_runtime.product_version = simctl_runtime.version
 
-            needed_runtime.product_build_version = [needed_runtime.product_build_version, available_runtime.build_version].compact.max
+            needed_runtime.product_build_version = [needed_runtime.product_build_version, simctl_runtime.build_version].compact.max
 
-            needed_runtime.product_build_version.almost_equal?(available_runtime.build_version)
+            needed_runtime.product_build_version.almost_equal?(simctl_runtime.build_version)
           end
 
-        matching_runtimes.max_by { |available_runtime| [available_runtime.version, available_runtime.build_version] }
+        matching_runtimes.max_by { |simctl_runtime| [simctl_runtime.version, simctl_runtime.build_version] }
       end
 
-      def available_runtime_for_required_device(required_device)
-        available_runtime = available_runtime_matching_needed_runtime?(required_device.required_runtime)
+      def simctl_runtime_for_required_device(required_device)
+        simctl_runtime = simctl_runtime_matching_needed_runtime?(required_device.required_runtime)
 
-        if available_runtime.nil?
+        if simctl_runtime.nil?
           UI.important("Runtime #{required_device.required_runtime.description} not found. Skipping simulator creation for #{required_device.description}...")
           return nil
         end
 
         # Check if the runtime supports the device type.
-        if available_runtime.supported_device_types
+        if simctl_runtime.supported_device_types
             .none? { |supported_device_type| supported_device_type.identifier == required_device.device_type.identifier }
-          UI.important("Device type #{required_device.device_type.name} is not supported by runtime #{available_runtime.identifier}. Skipping simulator creation for #{required_device.description}...")
+          UI.important("Device type #{required_device.device_type.name} is not supported by runtime #{simctl_runtime.identifier}. Skipping simulator creation for #{required_device.description}...")
           return nil
         end
 
-        if available_runtime.nil?
+        if simctl_runtime.nil?
           UI.important("Runtime #{required_device.required_runtime.description} not found. Skipping simulator creation for #{required_device.description}...")
           return nil
         end
 
-        available_runtime
+        simctl_runtime
       end
 
       def download_and_install_missing_runtime(missing_runtime)
@@ -184,7 +184,7 @@ module Fastlane
       end
 
       def required_runtime_for_device(required_device, runtime_version)
-        sdk = max_available_simulator_sdks[required_device.os_name]
+        sdk = max_xcodebuild_simulator_sdks[required_device.os_name]
 
         # If the runtime version is the same as the SDK version, use the SDK build version.
         # This will allow to use different runtimes for the same version but different Xcode beta versions.
@@ -205,10 +205,10 @@ module Fastlane
       end
 
       # Returns a hash where key is platform string and value is sdk version.
-      def max_available_simulator_sdks
-        return @max_available_simulator_sdks unless @max_available_simulator_sdks.nil?
+      def max_xcodebuild_simulator_sdks
+        return @max_xcodebuild_simulator_sdks unless @max_xcodebuild_simulator_sdks.nil?
 
-        @max_available_simulator_sdks = shell_helper.available_sdks
+        @max_xcodebuild_simulator_sdks = shell_helper.xcodebuild_sdks
           # Only simulators
           .filter { |sdk| sdk.platform.include?('simulator') }
           # Calculate max version for each product name
@@ -218,7 +218,7 @@ module Fastlane
             sdk_versions[os_name] = sdk if stored_sdk.nil? || sdk.product_version > stored_sdk.product_version
           end
 
-        @max_available_simulator_sdks
+        @max_xcodebuild_simulator_sdks
       end
     end
   end
