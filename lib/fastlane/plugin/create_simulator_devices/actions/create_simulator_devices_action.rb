@@ -7,10 +7,6 @@ require_relative '../helpers/create_simulator_devices/models'
 
 module Fastlane
   module Actions
-    module SharedValues
-      AVAILABLE_SIMULATOR_DEVICES = :AVAILABLE_SIMULATOR_DEVICES
-    end
-
     CreateSimulatorDevices = ::Fastlane::CreateSimulatorDevices
 
     # Create simulator devices.
@@ -34,11 +30,7 @@ module Fastlane
           verbose: verbose
         )
 
-        available_simulator_devices = runner.run(required_devices)
-
-        Actions.lane_context[SharedValues::AVAILABLE_SIMULATOR_DEVICES] = available_simulator_devices
-
-        available_simulator_devices
+        runner.run(required_devices)
       end
 
       #####################################################

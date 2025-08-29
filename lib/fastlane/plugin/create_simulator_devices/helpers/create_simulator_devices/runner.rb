@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative 'runtime_helper'
+require 'fastlane'
+require_relative 'shared_values'
 
 module Fastlane
   # Create simulator devices.
@@ -48,14 +50,15 @@ module Fastlane
 
         log_matched_devices(matched_devices: matched_devices)
 
-        matched_devices.map!(&:description)
+        available_simulator_devices = matched_devices.map(&:available_device)
+        Actions.lane_context[Actions::SharedValues::AVAILABLE_SIMULATOR_DEVICES] = available_simulator_devices
 
-        UI.user_error!('No available devices found') if matched_devices.empty?
-
-        matched_devices
+        available_simulator_devices.map(&:name)
       end
 
       def log_matched_devices(matched_devices:)
+        UI.user_error!('No available devices found') if matched_devices.empty?
+
         UI.message('Matched devices:')
         matched_devices.each do |matched_device|
           device_info = ''
@@ -65,6 +68,11 @@ module Fastlane
           end
           UI.message("  #{matched_device.description}: #{matched_device.available_device.description}#{device_info}")
         end
+
+        matched_devices_names = matched_devices
+          .map { |matched_device| matched_device.available_device.name }
+          .join(', ')
+        UI.message("Available simulator devices: #{matched_devices_names}")
       end
 
       def delete_unavailable_devices
