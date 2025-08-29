@@ -18,13 +18,13 @@ module Fastlane
       end
 
       def run(devices)
+        UI.message("Simulator devices to create: #{devices.join(', ')}")
+
         shell_helper.stop_core_simulator_services
 
         # Delete unusable runtimes and unavailable devices.
         runtime_helper.delete_unusable_runtimes
         delete_unavailable_devices
-
-        UI.message("Simulator devices to create: #{devices.join(', ')}")
 
         # Create distict required devices from a given list of device strings.
         required_devices = devices
@@ -48,7 +48,8 @@ module Fastlane
 
         UI.message('Matched devices:')
         matched_devices.each do |matched_device|
-          UI.message("  #{matched_device.description}: #{matched_device.available_device.description}")
+          device_info = shell_helper.device_info_by_udid(matched_device.available_device.udid)
+          UI.message("  #{matched_device.description}: #{matched_device.available_device.description}\n#{device_info}")
         end
 
         detailed_log_matched_devices(matched_devices) if verbose
@@ -58,13 +59,6 @@ module Fastlane
         UI.user_error!('No available devices found') if matched_devices.empty?
 
         matched_devices
-      end
-
-      def detailed_log_matched_devices(matched_devices)
-        matched_devices.each do |matched_device|
-          device_info = shell_helper.device_info_by_udid(matched_device.available_device.udid)
-          UI.message("  #{matched_device.description}:\n#{device_info}\n")
-        end
       end
 
       def delete_unavailable_devices
@@ -137,6 +131,7 @@ module Fastlane
 
         device_type = available_device_types.detect do |available_device_type|
           # Avoid matching "iPhone 16" for the "iPhone 16e" device.
+          # Avoid matching "iPhone 16 Pro" for the "iPhone Pro Max" device.
           "#{device} ".start_with?("#{available_device_type.name} ")
         end
 
