@@ -163,6 +163,14 @@ module Fastlane
           UI.important("Failed to import runtime #{runtime_name} with '#{import_platform_command}' :\n#{e}")
         end
       end
+
+      def device_info_by_udid(udid)
+        sh(
+          command: "xcrun simctl list devices --json | jq '.devices | to_entries[] | select(.value[].udid==\"#{udid}\")'",
+          print_command: false,
+          print_command_output: false
+        )
+      end
     end
   end
 end

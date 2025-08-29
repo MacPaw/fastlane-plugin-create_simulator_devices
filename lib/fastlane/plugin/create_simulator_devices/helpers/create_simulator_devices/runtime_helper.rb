@@ -43,7 +43,10 @@ module Fastlane
 
         missing_runtimes = missing_runtimes(needed_runtimes)
 
-        return if missing_runtimes.empty?
+        if missing_runtimes.empty?
+          UI.message('All required runtimes are present. Skipping runtime installation...') if verbose
+          return
+        end
 
         missing_runtimes.each do |missing_runtime|
           download_and_install_missing_runtime(missing_runtime)

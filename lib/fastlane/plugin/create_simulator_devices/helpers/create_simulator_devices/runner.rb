@@ -24,10 +24,17 @@ module Fastlane
         runtime_helper.delete_unusable_runtimes
         delete_unavailable_devices
 
+        UI.message("Simulator devices to create: #{devices.join(', ')}")
+
         # Create distict required devices from a given list of device strings.
         required_devices = devices
           .filter_map { |device| required_device_for_device(device) }
           .uniq { |required_device| [required_device.device_type.name, required_device.required_runtime.product_version] }
+
+        if verbose
+          UI.message('Unique required devices:')
+          UI.message("  #{required_devices.map(&:description).join("\n  ")}")
+        end
 
         # Install missing runtimes if needed.
         runtime_helper.install_missing_runtimes(required_devices)
@@ -39,18 +46,25 @@ module Fastlane
         matched_devices = required_devices
           .reject { |required_device| required_device.available_device.nil? }
 
-        if verbose
-          UI.message('Matched devices:')
-          matched_devices.each do |matched_device|
-            UI.message("\t#{matched_device.description}: #{matched_device.available_device.description}")
-          end
+        UI.message('Matched devices:')
+        matched_devices.each do |matched_device|
+          UI.message("  #{matched_device.description}: #{matched_device.available_device.description}")
         end
+
+        detailed_log_matched_devices(matched_devices) if verbose
 
         matched_devices.map!(&:description)
 
         UI.user_error!('No available devices found') if matched_devices.empty?
 
         matched_devices
+      end
+
+      def detailed_log_matched_devices(matched_devices)
+        matched_devices.each do |matched_device|
+          device_info = shell_helper.device_info_by_udid(matched_device.udid)
+          UI.message("  #{matched_device.description}:\n#{device_info}\n")
+        end
       end
 
       def delete_unavailable_devices
@@ -82,7 +96,10 @@ module Fastlane
         missing_devices = required_devices
           .select { |required_device| required_device.available_device.nil? }
 
-        return if missing_devices.empty?
+        if missing_devices.empty?
+          UI.message('All required devices are present. Skipping device creation...') if verbose
+          return
+        end
 
         UI.message('Creating missing devices')
         missing_devices.each do |missing_device|
