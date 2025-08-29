@@ -58,11 +58,19 @@ module Fastlane
         return self == other unless lhs_is_beta && rhs_is_beta && @build_version.length == rhs_build_version.to_s.length
 
         # Take only leading chars up to the first letter included e.g. 22C146 -> 22C
-        minor_version == rhs_build_version.minor_version
+        major == rhs_build_version.major && minor == rhs_build_version.minor && patch == rhs_build_version.patch
       end
 
-      def minor_version
-        AppleBuildVersion.new(@build_version.match(/^[0-9]+[A-Z]+/)[0])
+      def major
+        @build_version.match(/^([0-9]+)([A-Z][0-9]{2,3})([0-9]+)/)[1]
+      end
+
+      def minor
+        @build_version.match(/^([0-9]+)([A-Z][0-9]{2,3})([0-9]+)/)[2]
+      end
+
+      def patch
+        @build_version.match(/^([0-9]+)([A-Z][0-9]{2,3})([0-9]+)/)[3]
       end
 
       def <(other)

@@ -155,8 +155,12 @@ module Fastlane
           missing_runtime.os_name.shellescape
         ]
 
-        command << '-buildVersion'
-        command << missing_runtime.product_version.to_s.shellescape
+        is_beta = missing_runtime.product_build_version.nil? ? false : missing_runtime.product_build_version.beta?
+
+        unless is_beta
+          command << '-buildVersion'
+          command << missing_runtime.product_version.to_s.shellescape
+        end
 
         sh(command: command.join(' '), print_command: true, print_command_output: true)
       end

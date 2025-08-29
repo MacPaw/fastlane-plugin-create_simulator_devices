@@ -148,7 +148,9 @@ module Fastlane
           #   * given "iPhone 15 (17.0)" match will search for device named exactly "iPhone 15 (17.0)".
           #   * given "iPhone 15" match will search for device named exactly "iPhone 15".
           # So we need to return the full device name for the required device for snapshot to find the correct device.
-          "#{required_device.device_type.name} (#{required_device.required_runtime.product_version})"
+          runtime_build = required_device.simctl_runtime.build_version
+          build_suffix = runtime_build.beta? ? "-#{runtime_build}" : ''
+          "#{required_device.device_type.name} (#{required_device.simctl_runtime.version}#{build_suffix})"
         end
       end
 

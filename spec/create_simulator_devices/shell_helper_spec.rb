@@ -214,7 +214,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
       missing_version = '17.4'
       cache_dir = '/tmp/test_cache'
 
-      missing_runtime = RequiredRuntime.new(sdk_platform: nil, os_name: missing_platform, product_version: missing_version, product_build_version: nil, is_latest: false)
+      missing_runtime = RequiredRuntime.new(sdk_platform: nil, os_name: missing_platform, product_version: missing_version, product_build_version: AppleBuildVersion.new('21E210'), is_latest: false)
       expect(sut).to receive(:sh).with(
         command: "xcrun xcodebuild -verbose -exportPath #{cache_dir.shellescape} -downloadPlatform #{missing_platform.shellescape} -buildVersion #{missing_version.shellescape}",
         print_command: true,
