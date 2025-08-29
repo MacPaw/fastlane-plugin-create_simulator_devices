@@ -8,6 +8,7 @@ require_relative 'models/xcodebuild/sdk'
 require_relative 'models/required_device'
 require_relative 'models/required_runtime'
 require_relative 'models/apple_build_version'
+require 'fastlane'
 
 module Fastlane
   # Create simulator devices.
