@@ -88,7 +88,7 @@ module Fastlane
                                          description: 'Print xcrun simctl commands output',
                                          type: Boolean,
                                          optional: true,
-                                         default_value: false),
+                                         default_value: false)
         ]
       end
 
