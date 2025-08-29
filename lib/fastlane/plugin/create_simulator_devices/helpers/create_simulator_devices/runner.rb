@@ -53,7 +53,7 @@ module Fastlane
         available_simulator_devices = matched_devices.map(&:available_device)
         Actions.lane_context[Actions::SharedValues::AVAILABLE_SIMULATOR_DEVICES] = available_simulator_devices
 
-        available_simulator_devices.map(&:name)
+        matched_devices.map(&:description)
       end
 
       def log_matched_devices(matched_devices:)
