@@ -69,9 +69,7 @@ module Fastlane
           UI.message("  #{matched_device.description}: #{matched_device.available_device.description}#{device_info}")
         end
 
-        matched_devices_names = matched_devices
-          .map { |matched_device| matched_device.available_device.name }
-          .join(', ')
+        matched_devices_names = matched_devices.map(&:description).join(', ')
         UI.message("Available simulator devices: #{matched_devices_names}")
       end
 
