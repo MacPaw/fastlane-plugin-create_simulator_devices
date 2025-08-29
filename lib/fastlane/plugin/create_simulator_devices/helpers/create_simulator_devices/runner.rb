@@ -62,7 +62,7 @@ module Fastlane
 
       def detailed_log_matched_devices(matched_devices)
         matched_devices.each do |matched_device|
-          device_info = shell_helper.device_info_by_udid(matched_device.udid)
+          device_info = shell_helper.device_info_by_udid(matched_device.available_device.udid)
           UI.message("  #{matched_device.description}:\n#{device_info}\n")
         end
       end
