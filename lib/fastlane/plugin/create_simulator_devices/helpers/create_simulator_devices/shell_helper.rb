@@ -167,7 +167,7 @@ module Fastlane
 
       def device_info_by_udid(udid)
         sh(
-          command: "xcrun simctl list devices --json | jq '.devices | to_entries[].value[] | select(.udid==\"#{udid}\")'",
+          command: "xcrun simctl list devices --json | jq '.devices | to_entries[].value[] | select(.udid==\"#{udid.shellescape}\")'",
           print_command: false,
           print_command_output: false
         )
