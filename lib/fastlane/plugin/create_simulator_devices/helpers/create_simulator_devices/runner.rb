@@ -13,7 +13,7 @@ module Fastlane
 
       def initialize(runtime_helper:, shell_helper:, verbose:)
         self.shell_helper = shell_helper
-        self.verbose = verbose || shell_helper.verbose
+        self.verbose = verbose
         self.runtime_helper = runtime_helper
       end
 
