@@ -129,10 +129,11 @@ module Fastlane
       def required_device_for_device(device)
         available_device_types = shell_helper.available_device_types
 
+        device_os_version = device[/ \(([\d.]*?)\)$/, 1]
+        device_name = device.delete_suffix(" (#{device_os_version})").strip unless device_os_version.nil?
+
         device_type = available_device_types.detect do |available_device_type|
-          # Avoid matching "iPhone 16" for the "iPhone 16e" device.
-          # Avoid matching "iPhone 16 Pro" for the "iPhone Pro Max" device.
-          "#{device} ".start_with?("#{available_device_type.name} ")
+          device_name == available_device_type.name
         end
 
         unless device_type
@@ -144,7 +145,6 @@ module Fastlane
 
         os_name = PRODUCT_FAMILY_TO_OS_NAME[product_family]
         device_os_version = device.delete_prefix(device_type.name).strip
-        device_os_version = device_os_version[/\(([\d.]*?)\)/, 1]
 
         runtime_version = nil
         unless device_os_version.nil? || device_os_version.empty?
