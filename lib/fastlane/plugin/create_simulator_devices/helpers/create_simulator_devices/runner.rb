@@ -46,7 +46,7 @@ module Fastlane
         matched_devices = required_devices
           .reject { |required_device| required_device.available_device.nil? }
 
-        log_matched_devices
+        log_matched_devices(matched_devices: matched_devices)
 
         matched_devices.map!(&:description)
 
@@ -55,7 +55,7 @@ module Fastlane
         matched_devices
       end
 
-      def log_matched_devices
+      def log_matched_devices(matched_devices:)
         UI.message('Matched devices:')
         matched_devices.each do |matched_device|
           device_info = ''

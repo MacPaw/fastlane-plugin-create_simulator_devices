@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'models'
+require 'fastlane'
 
 module Fastlane
   # Create simulator devices.

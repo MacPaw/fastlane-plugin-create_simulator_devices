@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'fastlane'
 require_relative 'shell_helper'
 
 module Fastlane
