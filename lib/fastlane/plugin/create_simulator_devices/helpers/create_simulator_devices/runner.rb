@@ -48,11 +48,13 @@ module Fastlane
 
         UI.message('Matched devices:')
         matched_devices.each do |matched_device|
-          device_info = shell_helper.device_info_by_udid(matched_device.available_device.udid)
-          UI.message("  #{matched_device.description}: #{matched_device.available_device.description}\n#{device_info}")
+          device_info = ''
+          if verbose
+            device_info = shell_helper.device_info_by_udid(matched_device.available_device.udid)
+            device_info = "\n#{device_info}"
+          end
+          UI.message("  #{matched_device.description}: #{matched_device.available_device.description}#{device_info}")
         end
-
-        detailed_log_matched_devices(matched_devices) if verbose
 
         matched_devices.map!(&:description)
 
