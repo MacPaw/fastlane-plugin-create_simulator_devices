@@ -46,6 +46,16 @@ module Fastlane
         matched_devices = required_devices
           .reject { |required_device| required_device.available_device.nil? }
 
+        log_matched_devices
+
+        matched_devices.map!(&:description)
+
+        UI.user_error!('No available devices found') if matched_devices.empty?
+
+        matched_devices
+      end
+
+      def log_matched_devices
         UI.message('Matched devices:')
         matched_devices.each do |matched_device|
           device_info = ''
@@ -55,12 +65,6 @@ module Fastlane
           end
           UI.message("  #{matched_device.description}: #{matched_device.available_device.description}#{device_info}")
         end
-
-        matched_devices.map!(&:description)
-
-        UI.user_error!('No available devices found') if matched_devices.empty?
-
-        matched_devices
       end
 
       def delete_unavailable_devices
