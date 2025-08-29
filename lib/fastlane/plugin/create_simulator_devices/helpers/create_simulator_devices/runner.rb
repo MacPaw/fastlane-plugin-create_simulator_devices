@@ -144,14 +144,14 @@ module Fastlane
         available_device_types = shell_helper.available_device_types
 
         device_os_version = device[/ \(([\d.]*?)\)$/, 1]
-        device_name = device.delete_suffix(" (#{device_os_version})").strip unless device_os_version.nil?
+        device_name = device_os_version.nil? ? device : device.delete_suffix(" (#{device_os_version})").strip
 
         device_type = available_device_types.detect do |available_device_type|
           device_name == available_device_type.name
         end
 
         unless device_type
-          UI.important("Device type not found for device #{device}")
+          UI.important("Device type not found for device #{device}. Available device types: #{available_device_types.map(&:name).join(', ')}.")
           return nil
         end
 

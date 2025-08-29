@@ -50,16 +50,15 @@ module Fastlane
       def almost_equal?(other)
         return false if other.nil?
 
-        lhs_build_version = @build_version
-        rhs_build_version = other.to_s
+        rhs_build_version = AppleBuildVersion.new(other.to_s)
 
         lhs_is_beta = beta?
-        rhs_is_beta = AppleBuildVersion.new(rhs_build_version).beta?
+        rhs_is_beta = rhs_build_version.beta?
 
-        return self == other unless lhs_is_beta && rhs_is_beta && lhs_build_version.length == rhs_build_version.length
+        return self == other unless lhs_is_beta && rhs_is_beta && @build_version.length == rhs_build_version.to_s.length
 
         # Take only leading chars up to the first letter included e.g. 22C146 -> 22C
-        lhs_build_version.minor_version == rhs_build_version.minor_version
+        minor_version == rhs_build_version.minor_version
       end
 
       def minor_version

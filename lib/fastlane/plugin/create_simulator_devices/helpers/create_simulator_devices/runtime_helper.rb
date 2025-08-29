@@ -199,7 +199,7 @@ module Fastlane
           sdk_platform: sdk.platform,
           os_name: required_device.os_name,
           product_version: runtime_version || sdk.product_version,
-          product_build_version:,
+          product_build_version: product_build_version,
           is_latest: sdk.product_build_version.almost_equal?(product_build_version)
         )
       end
