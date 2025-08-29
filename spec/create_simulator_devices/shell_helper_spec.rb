@@ -35,7 +35,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
     end
   end
 
-  describe '#available_device_types' do
+  describe '#simctl_device_types' do
     it 'fetches and parses available device types' do
       # GIVEN: Mock JSON response from xcrun simctl list devicetypes
       json_response = <<~JSON
@@ -57,7 +57,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
       ).and_return(json_response)
 
       # WHEN: Fetching available device types
-      result = sut.available_device_types
+      result = sut.simctl_device_types
 
       # THEN: Should return array of DeviceType objects
       expect(result).to be_an(Array)
@@ -66,7 +66,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
     end
   end
 
-  describe '#available_devices_for_runtimes' do
+  describe '#simctl_devices_for_runtimes' do
     it 'fetches and parses available devices' do
       # GIVEN: Mock JSON response from xcrun simctl list devices
       json_response = <<~JSON
@@ -97,15 +97,15 @@ RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
       # WHEN: Fetching available devices
       # Note: This test may fail with current implementation as Device.from_hash expects
       # runtime and deviceType objects, not just identifiers
-      expect { sut.available_devices_for_runtimes }.not_to raise_error
+      expect { sut.simctl_devices_for_runtimes }.not_to raise_error
 
       # THEN: Should return parsed devices data (actual implementation may need fixing)
-      result = sut.available_devices_for_runtimes
+      result = sut.simctl_devices_for_runtimes
       expect(result).to be_an(Hash)
     end
   end
 
-  describe '#available_runtimes' do
+  describe '#simctl_runtimes' do
     it 'fetches and parses available runtimes' do
       # GIVEN: Mock JSON response from xcrun simctl list runtimes
       json_response = <<~JSON
@@ -137,7 +137,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
       ).and_return(json_response)
 
       # WHEN: Fetching available runtimes
-      result = sut.available_runtimes
+      result = sut.simctl_runtimes
 
       # THEN: Should return array of Runtime objects
       expect(result).to be_an(Array)
@@ -146,7 +146,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
     end
   end
 
-  describe '#available_sdks' do
+  describe '#xcodebuild_sdks' do
     it 'fetches and parses available SDKs' do
       # GIVEN: Mock JSON response from xcodebuild -showsdks
       json_response = <<~JSON
@@ -174,7 +174,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
       ).and_return(json_response)
 
       # WHEN: Fetching available SDKs
-      result = sut.available_sdks
+      result = sut.xcodebuild_sdks
 
       # THEN: Should return array of SDK objects
       expect(result).to be_an(Array)

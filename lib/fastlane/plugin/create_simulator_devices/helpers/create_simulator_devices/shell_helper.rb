@@ -53,17 +53,17 @@ module Fastlane
         end
       end
 
-      def available_device_types(force: false)
-        return @available_device_types unless force || @available_device_types.nil?
+      def simctl_device_types(force: false)
+        return @simctl_device_types unless force || @simctl_device_types.nil?
 
         UI.message('Fetching available device types...')
         json = sh(command: 'xcrun simctl list --json --no-escape-slashes devicetypes')
 
-        @available_device_types = JSON
+        @simctl_device_types = JSON
           .parse(json, symbolize_names: true)[:devicetypes]
           .map { |device_type| SimCTL::DeviceType.from_hash(device_type) }
 
-        @available_device_types
+        @simctl_device_types
       end
 
       def delete_device(udid)
@@ -76,31 +76,31 @@ module Fastlane
         sh(command: 'xcrun simctl delete unavailable')
       end
 
-      def available_devices_for_runtimes(force: false)
-        return @available_devices_for_runtimes unless force || @available_devices_for_runtimes.nil?
+      def simctl_devices_for_runtimes(force: false)
+        return @simctl_devices_for_runtimes unless force || @simctl_devices_for_runtimes.nil?
 
         UI.message('Fetching available devices...')
         json = sh(command: 'xcrun simctl list --json --no-escape-slashes devices')
 
-        @available_devices_for_runtimes = JSON
+        @simctl_devices_for_runtimes = JSON
           .parse(json, symbolize_names: true)[:devices]
           .transform_values { |devices| devices.map { |device| SimCTL::Device.from_hash(device) } }
 
-        @available_devices_for_runtimes
+        @simctl_devices_for_runtimes
       end
 
-      def available_runtimes(force: false)
-        return @available_runtimes unless force || @available_runtimes.nil?
+      def simctl_runtimes(force: false)
+        return @simctl_runtimes unless force || @simctl_runtimes.nil?
 
         UI.message('Fetching available runtimes...')
         json = sh(command: 'xcrun simctl list --json --no-escape-slashes runtimes')
 
-        @available_runtimes = JSON
+        @simctl_runtimes = JSON
           .parse(json, symbolize_names: true)[:runtimes]
           .map { |runtime| SimCTL::Runtime.from_hash(runtime) }
           .select(&:available?)
 
-        @available_runtimes
+        @simctl_runtimes
       end
 
       def installed_runtimes_with_state
@@ -112,17 +112,17 @@ module Fastlane
           .map { |_, runtime| SimCTL::RuntimeWithState.from_hash(runtime) }
       end
 
-      def available_sdks(force: false)
-        return @available_sdks unless force || @available_sdks.nil?
+      def xcodebuild_sdks(force: false)
+        return @xcodebuild_sdks unless force || @xcodebuild_sdks.nil?
 
         UI.message('Fetching available sdks...')
         json = sh(command: 'xcrun xcodebuild -showsdks -json')
 
-        @available_sdks = JSON
+        @xcodebuild_sdks = JSON
           .parse(json, symbolize_names: true)
           .map { |sdk| Xcodebuild::SDK.from_hash(sdk) }
 
-        @available_sdks
+        @xcodebuild_sdks
       end
 
       def create_device(name, device_type_identifier, runtime_identifier)
