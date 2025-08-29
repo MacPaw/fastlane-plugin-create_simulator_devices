@@ -25,7 +25,7 @@ module Fastlane
         required_devices = params[:devices]
         UI.user_error!('No devices specified') if required_devices.nil? || required_devices.empty?
 
-        shell_helper = CreateSimulatorDevices::ShellHelper.new(verbose:, action_context: self)
+        shell_helper = CreateSimulatorDevices::ShellHelper.new(print_command: params[:print_command], print_command_output: params[:print_command_output], action_context: self)
         runtime_helper = CreateSimulatorDevices::RuntimeHelper.new(cache_dir: params[:cache_dir], shell_helper:, verbose:)
 
         runner = CreateSimulatorDevices::Runner.new(
@@ -69,16 +69,26 @@ module Fastlane
                                          default_value: 'iPhone 16'),
           ::FastlaneCore::ConfigItem.new(key: :cache_dir,
                                          description: 'The directory to cache the simulator runtimes',
-                                         is_string: true,
+                                         type: String,
                                          optional: true,
                                          default_value: "#{Dir.home}/.cache/create_simulator_devices"),
           ::FastlaneCore::ConfigItem.new(key: :verbose,
                                          env_name: 'VERBOSE',
                                          description: 'Verbose output',
-                                         is_string: false,
+                                         type: Boolean,
                                          optional: true,
                                          default_value: ::FastlaneCore::Globals.verbose?,
-                                         default_value_dynamic: true)
+                                         default_value_dynamic: true),
+          ::FastlaneCore::ConfigItem.new(key: :print_command,
+                                         description: 'Print xcrun simctl commands',
+                                         type: Boolean,
+                                         optional: true,
+                                         default_value: false),
+          ::FastlaneCore::ConfigItem.new(key: :print_command_output,
+                                         description: 'Print xcrun simctl commands output',
+                                         type: Boolean,
+                                         optional: true,
+                                         default_value: false),
         ]
       end
 
