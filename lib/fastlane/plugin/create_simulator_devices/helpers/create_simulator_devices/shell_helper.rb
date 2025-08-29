@@ -66,7 +66,7 @@ module Fastlane
         @simctl_device_types
       end
 
-      def delete_device(udid)
+      def delete_device(udid:)
         UI.message("Deleting device #{udid}...")
         sh(command: "xcrun simctl delete #{udid.shellescape}")
       end
@@ -128,6 +128,11 @@ module Fastlane
       def create_device(name, device_type_identifier, runtime_identifier)
         UI.message("Creating device #{name}")
         sh(command: "xcrun simctl create #{name.shellescape} #{device_type_identifier.shellescape} #{runtime_identifier.shellescape}")
+      end
+
+      def rename_device(udid:, name:)
+        UI.message("Renaming device with udid #{udid} to #{name}")
+        sh(command: "xcrun simctl rename #{udid.shellescape} #{name.shellescape}")
       end
 
       def delete_runtime(runtime_identifier)

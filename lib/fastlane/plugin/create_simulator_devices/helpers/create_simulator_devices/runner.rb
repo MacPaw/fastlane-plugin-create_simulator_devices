@@ -3,20 +3,24 @@
 require_relative 'runtime_helper'
 require 'fastlane'
 require_relative 'shared_values'
+require_relative 'models/device_naming_style'
 
 module Fastlane
   # Create simulator devices.
   module CreateSimulatorDevices
     # Does all the work to create simulator devices.
-    class Runner
+    class Runner # rubocop:disable Metrics/ClassLength
       UI = ::Fastlane::UI unless defined?(UI)
 
-      attr_accessor :shell_helper, :verbose, :runtime_helper
+      attr_accessor :shell_helper, :verbose, :runtime_helper, :can_rename_devices, :can_delete_duplicate_devices, :device_naming_style
 
-      def initialize(runtime_helper:, shell_helper:, verbose:)
+      def initialize(runtime_helper:, shell_helper:, verbose:, can_rename_devices:, can_delete_duplicate_devices:, device_naming_style:) # rubocop:disable Metrics/ParameterLists
         self.shell_helper = shell_helper
         self.verbose = verbose
         self.runtime_helper = runtime_helper
+        self.can_rename_devices = can_rename_devices
+        self.can_delete_duplicate_devices = can_delete_duplicate_devices
+        self.device_naming_style = device_naming_style
       end
 
       def run(devices)
@@ -50,10 +54,10 @@ module Fastlane
 
         log_matched_devices(matched_devices: matched_devices)
 
-        Actions.lane_context[Actions::SharedValues::AVAILABLE_SIMULATOR_DEVICES] = matched_devices
-
-        matched_devices_names = matched_devices.map(&:description)
+        matched_devices_names = matched_devices.map { |matched_device| returning_device_name_for_required_device(matched_device) }
         UI.message("Available simulator devices: #{matched_devices_names.join(', ')}")
+
+        Actions.lane_context[Actions::SharedValues::AVAILABLE_SIMULATOR_DEVICES] = matched_devices_names
 
         matched_devices_names
       end
@@ -85,14 +89,89 @@ module Fastlane
 
         simctl_devices = shell_helper.simctl_devices_for_runtimes[required_device.simctl_runtime.identifier.to_sym]
 
-        return [] if simctl_devices.nil?
+        return nil if simctl_devices.nil?
 
         # Find the device with the same name as the required device.
         devices_with_same_type = simctl_devices
           .select { |simctl_device| simctl_device.device_type_identifier == required_device.device_type.identifier }
 
-        devices_with_same_type
-          .detect { |simctl_device| simctl_device.name == required_device.device_type.name }
+        preferred_device_name = device_name_for_required_device(required_device)
+
+        # Prefer device with the same name that includes the runtime version.
+        matching_device = devices_with_same_type.detect { |simctl_device| simctl_device.name == preferred_device_name }
+
+        if can_rename_devices
+          # Otherwise, if rename is enabled, use the first device with the same type.
+          matching_device ||= devices_with_same_type.first
+          rename_device_if_needed(matching_device, preferred_device_name)
+        end
+
+        delete_duplicate_devices(devices_with_same_type, matching_device) if can_delete_duplicate_devices
+
+        matching_device
+      end
+
+      def rename_device_if_needed(matching_device, preferred_device_name)
+        return if matching_device.nil? || matching_device.name == preferred_device_name
+
+        UI.message("Renaming device #{matching_device.name} (udid: #{matching_device.udid}) to #{preferred_device_name}")
+        shell_helper.rename_device(udid: matching_device.udid, name: preferred_device_name)
+        matching_device.name = preferred_device_name
+      end
+
+      def delete_duplicate_devices(matching_devices, matching_device)
+        return if matching_device.nil?
+
+        matching_devices
+          .reject { |simctl_device| simctl_device.udid == matching_device.udid }
+          .each do |simctl_device|
+            UI.message("Deleting duplicate device #{simctl_device.name} (udid: #{simctl_device.udid})")
+            shell_helper.delete_device(udid: simctl_device.udid)
+          end
+      end
+
+      # Returns the device name for the required device.
+      #
+      # This name is used in the simctl device name.
+      def device_name_for_required_device(required_device)
+        case device_naming_style
+        when DeviceNamingStyle::SCAN, DeviceNamingStyle::RUN_TESTS
+          # scan modifies the device name by removing the runtime version when searching for a passed device name.
+          # E.g.:
+          #   * given "iPhone 15 (17.0)" match will search for simulator named "iPhone 15" with the SDK version 17.0.
+          #   * given "iPhone 15" match will search for simulator named "iPhone 15" with the default SDK version.
+          # So we need to name the device by the device type name for scan to find the correct device.
+          required_device.device_type.name
+        when DeviceNamingStyle::SNAPSHOT, DeviceNamingStyle::CAPTURE_IOS_SCREENSHOTS
+          # snapshot nither does not modify the device name when searching for a passed device name nor extracts the runtime version from the device name.
+          # E.g.:
+          #   * given "iPhone 15 (17.0)" match will search for device named exactly "iPhone 15 (17.0)".
+          #   * given "iPhone 15" match will search for device named exactly "iPhone 15".
+          # So we need to return the full device name for the required device for snapshot to find the correct device.
+          "#{required_device.device_type.name} (#{required_device.required_runtime.product_version})"
+        end
+      end
+
+      # Returns the device name for the required device.
+      #
+      # This name is used when passing the device name to the scan or snapshot.
+      def returning_device_name_for_required_device(required_device)
+        case device_naming_style
+        when DeviceNamingStyle::SCAN, DeviceNamingStyle::RUN_TESTS
+          # scan respects the runtime version in the devices list, so we need to return the full device name for the required device, otherwise the default SDK version will be used.
+          # E.g.:
+          #   * given "iPhone 15 (17.0)" match will search for simulator named "iPhone 15" with the SDK version 17.0.
+          #   * given "iPhone 15" match will search for simulator named "iPhone 15" with the default SDK version.
+          # So we need to return the device name and the required runtime version for scan to find the correct device.
+          "#{required_device.simctl_device.name} (#{required_device.required_runtime.product_version})"
+        when DeviceNamingStyle::SNAPSHOT, DeviceNamingStyle::CAPTURE_IOS_SCREENSHOTS
+          # snapshot does not modify the device name when searching for a passed device name nor extracts the runtime version from the device name.
+          # E.g.:
+          #   * given "iPhone 15 (17.0)" match will search for device named exactly "iPhone 15 (17.0)".
+          #   * given "iPhone 15" match will search for device named exactly "iPhone 15" .
+          # So we need to return the full device name for the required device for snapshot to find the correct device.
+          required_device.simctl_device.name
+        end
       end
 
       def create_missing_devices(required_devices)
@@ -109,7 +188,7 @@ module Fastlane
         UI.message('Creating missing devices')
         missing_devices.each do |missing_device|
           shell_helper.create_device(
-            missing_device.device_type.name,
+            device_name_for_required_device(missing_device),
             missing_device.device_type.identifier,
             missing_device.simctl_runtime.identifier
           )
