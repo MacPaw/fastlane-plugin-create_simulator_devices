@@ -245,7 +245,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       existing_file = '/tmp/test_cache/iphonesimulator_17.0.1_21A326.dmg'
 
       allow(FileUtils).to receive(:mkdir_p).with(cache_dir)
-      allow(Dir).to receive(:glob).with(/iphonesimulator_17\.0\*_21A\*\.dmg/).and_return([existing_file])
+      allow(Dir).to receive(:glob).with('/tmp/test_cache/iphonesimulator_17.0*_21A326*.dmg').and_return([existing_file])
       allow(sut).to receive(:runtime_build_version_for_filename).and_return(AppleBuildVersion.new('21A326'))
       allow(Fastlane::UI).to receive(:message)
 

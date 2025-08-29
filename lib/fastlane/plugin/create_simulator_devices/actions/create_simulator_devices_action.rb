@@ -4,6 +4,7 @@ require 'fastlane'
 require 'spaceship'
 require_relative '../helpers/create_simulator_devices/runner'
 require_relative '../helpers/create_simulator_devices/models'
+require_relative '../helpers/create_simulator_devices/models/device_naming_style'
 
 module Fastlane
   module Actions
@@ -22,12 +23,15 @@ module Fastlane
         UI.user_error!('No devices specified') if required_devices.nil? || required_devices.empty?
 
         shell_helper = CreateSimulatorDevices::ShellHelper.new(print_command: params[:print_command], print_command_output: params[:print_command_output], action_context: self)
-        runtime_helper = CreateSimulatorDevices::RuntimeHelper.new(cache_dir: params[:cache_dir], shell_helper:, verbose:)
+        runtime_helper = CreateSimulatorDevices::RuntimeHelper.new(cache_dir: params[:cache_dir], shell_helper: shell_helper, verbose: verbose)
 
         runner = CreateSimulatorDevices::Runner.new(
           runtime_helper: runtime_helper,
           shell_helper: shell_helper,
-          verbose: verbose
+          verbose: verbose,
+          can_rename_devices: params[:rename_devices],
+          can_delete_duplicate_devices: params[:delete_duplicate_devices],
+          device_naming_style: params[:device_naming_style].to_sym
         )
 
         runner.run(required_devices)
@@ -52,7 +56,7 @@ module Fastlane
         )"
       end
 
-      def self.available_options
+      def self.available_options # rubocop:disable Metrics/MethodLength
         [
           ::FastlaneCore::ConfigItem.new(key: :devices,
                                          env_name: 'SCAN_DEVICES',
@@ -80,7 +84,29 @@ module Fastlane
                                          description: 'Print xcrun simctl commands output',
                                          type: Boolean,
                                          optional: true,
-                                         default_value: false)
+                                         default_value: false),
+          ::FastlaneCore::ConfigItem.new(key: :rename_devices,
+                                         env_name: 'CREATE_SIMULATOR_DEVICES_RENAME_DEVICES',
+                                         description: 'Rename devices if needed',
+                                         type: Boolean,
+                                         optional: true,
+                                         default_value: false),
+          ::FastlaneCore::ConfigItem.new(key: :delete_duplicate_devices,
+                                         env_name: 'CREATE_SIMULATOR_DEVICES_DELETE_DUPLICATE_DEVICES',
+                                         description: 'Delete duplicate devices',
+                                         type: Boolean,
+                                         optional: true,
+                                         default_value: false),
+          ::FastlaneCore::ConfigItem.new(key: :device_naming_style,
+                                         env_name: 'CREATE_SIMULATOR_DEVICES_DEVICE_NAMING_STYLE',
+                                         description: 'Device naming style',
+                                         type: String,
+                                         optional: true,
+                                         default_value: CreateSimulatorDevices::DeviceNamingStyle::SCAN.to_s,
+                                         verify_block: proc do |value|
+                                           allowed_values = CreateSimulatorDevices::DeviceNamingStyle::ALL
+                                           UI.user_error!("Invalid device naming style: #{value}. Allowed values: #{allowed_values.map(&:to_s).join(', ')}") unless allowed_values.include?(value.to_sym)
+                                         end)
         ]
       end
 
