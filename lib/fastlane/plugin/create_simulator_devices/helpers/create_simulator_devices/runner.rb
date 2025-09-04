@@ -12,15 +12,16 @@ module Fastlane
     class Runner # rubocop:disable Metrics/ClassLength
       UI = ::Fastlane::UI unless defined?(UI)
 
-      attr_accessor :shell_helper, :verbose, :runtime_helper, :can_rename_devices, :can_delete_duplicate_devices, :device_naming_style
+      attr_accessor :shell_helper, :verbose, :runtime_helper, :can_rename_devices, :can_delete_duplicate_devices, :device_naming_style, :remove_cached_runtimes
 
-      def initialize(runtime_helper:, shell_helper:, verbose:, can_rename_devices:, can_delete_duplicate_devices:, device_naming_style:) # rubocop:disable Metrics/ParameterLists
+      def initialize(runtime_helper:, shell_helper:, verbose:, can_rename_devices:, can_delete_duplicate_devices:, device_naming_style:, remove_cached_runtimes:) # rubocop:disable Metrics/ParameterLists
         self.shell_helper = shell_helper
         self.verbose = verbose
         self.runtime_helper = runtime_helper
         self.can_rename_devices = can_rename_devices
         self.can_delete_duplicate_devices = can_delete_duplicate_devices
         self.device_naming_style = device_naming_style
+        self.remove_cached_runtimes = remove_cached_runtimes
       end
 
       def run(devices)

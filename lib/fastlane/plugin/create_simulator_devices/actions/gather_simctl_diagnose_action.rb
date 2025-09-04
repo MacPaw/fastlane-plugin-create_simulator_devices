@@ -2,16 +2,18 @@
 
 require 'fastlane'
 require 'spaceship'
+require_relative '../helpers/create_simulator_devices/shell_helper'
 require_relative '../helpers/create_simulator_devices/runner'
-require_relative '../helpers/create_simulator_devices/models'
 require_relative '../helpers/create_simulator_devices/models/device_naming_style'
+require_relative '../helpers/gather_simctl_diagnose/runner'
 
 module Fastlane
   module Actions
+    GatherSimctlDiagnose = ::Fastlane::GatherSimctlDiagnose
     CreateSimulatorDevices = ::Fastlane::CreateSimulatorDevices
 
-    # Create simulator devices.
-    class CreateSimulatorDevicesAction < Fastlane::Action
+    # Gather simctl diagnose data.
+    class GatherSimctlDiagnoseAction < Fastlane::Action
       UI = ::Fastlane::UI unless defined?(UI)
 
       attr_accessor :shell_helper
@@ -23,16 +25,28 @@ module Fastlane
         UI.user_error!('No devices specified') if required_devices.nil? || required_devices.empty?
 
         shell_helper = CreateSimulatorDevices::ShellHelper.new(print_command: params[:print_command], print_command_output: params[:print_command_output], action_context: self)
-        runtime_helper = CreateSimulatorDevices::RuntimeHelper.new(cache_dir: params[:cache_dir], shell_helper: shell_helper, verbose: verbose)
+        runtime_helper = CreateSimulatorDevices::RuntimeHelper.new(cache_dir: nil, shell_helper: shell_helper, verbose: verbose)
 
-        runner = CreateSimulatorDevices::Runner.new(
+        create_simulator_devices_runner = ::Fastlane::CreateSimulatorDevices::Runner.new(
           runtime_helper: runtime_helper,
           shell_helper: shell_helper,
           verbose: verbose,
-          can_rename_devices: params[:rename_devices],
-          can_delete_duplicate_devices: params[:delete_duplicate_devices],
+          can_rename_devices: false,
+          can_delete_duplicate_devices: false,
           device_naming_style: params[:device_naming_style].to_sym,
-          remove_cached_runtimes: params[:remove_cached_runtimes]
+          remove_cached_runtimes: false
+        )
+
+        runner = GatherSimctlDiagnose::Runner.new(
+          runtime_helper: runtime_helper,
+          shell_helper: shell_helper,
+          verbose: verbose,
+          device_naming_style: params[:device_naming_style].to_sym,
+          create_simulator_devices_runner: create_simulator_devices_runner,
+          output_dir: params[:output_dir],
+          timeout: params[:timeout],
+          include_all_device_logs: params[:include_all_device_logs],
+          include_booted_device_data_directory: params[:include_booted_device_data_directory]
         )
 
         runner.run(required_devices)
@@ -43,17 +57,17 @@ module Fastlane
       #####################################################
 
       def self.description
-        'Creates simulator devices and installs missing runtimes if needed'
+        'Gathers simctl diagnose data'
       end
 
       def self.details
-        "This action does it best to create simulator devices.
+        "This action gathers simctl diagnose data.
 
         Usage sample:
 
-        available_simulators_list = create_simulator_devices(
+        gather_simctl_diagnose(
           devices: ['iPhone 15 (17.0)', 'iPhone 16', 'iPhone 14 (16.3)']
-          verbose: false
+          output_dir: 'diagnose'
         )"
       end
 
@@ -64,11 +78,6 @@ module Fastlane
                                          description: 'A list of simulator devices to install (e.g. "iPhone 16")',
                                          is_string: false,
                                          default_value: 'iPhone 16'),
-          ::FastlaneCore::ConfigItem.new(key: :cache_dir,
-                                         description: 'The directory to cache the simulator runtimes',
-                                         type: String,
-                                         optional: true,
-                                         default_value: "#{Dir.home}/.cache/create_simulator_devices"),
           ::FastlaneCore::ConfigItem.new(key: :verbose,
                                          env_name: 'VERBOSE',
                                          description: 'Verbose output',
@@ -76,6 +85,11 @@ module Fastlane
                                          optional: true,
                                          default_value: ::FastlaneCore::Globals.verbose?,
                                          default_value_dynamic: true),
+          ::FastlaneCore::ConfigItem.new(key: :output_dir,
+                                         env_name: 'GATHER_SIMCTL_DIAGNOSE_OUTPUT_DIR',
+                                         description: 'Output directory',
+                                         type: String,
+                                         optional: false),
           ::FastlaneCore::ConfigItem.new(key: :print_command,
                                          description: 'Print xcrun simctl commands',
                                          type: Boolean,
@@ -83,18 +97,6 @@ module Fastlane
                                          default_value: false),
           ::FastlaneCore::ConfigItem.new(key: :print_command_output,
                                          description: 'Print xcrun simctl commands output',
-                                         type: Boolean,
-                                         optional: true,
-                                         default_value: false),
-          ::FastlaneCore::ConfigItem.new(key: :rename_devices,
-                                         env_name: 'CREATE_SIMULATOR_DEVICES_RENAME_DEVICES',
-                                         description: 'Rename devices if needed',
-                                         type: Boolean,
-                                         optional: true,
-                                         default_value: false),
-          ::FastlaneCore::ConfigItem.new(key: :delete_duplicate_devices,
-                                         env_name: 'CREATE_SIMULATOR_DEVICES_DELETE_DUPLICATE_DEVICES',
-                                         description: 'Delete duplicate devices',
                                          type: Boolean,
                                          optional: true,
                                          default_value: false),
@@ -108,23 +110,35 @@ module Fastlane
                                            allowed_values = CreateSimulatorDevices::DeviceNamingStyle::ALL
                                            UI.user_error!("Invalid device naming style: #{value}. Allowed values: #{allowed_values.map(&:to_s).join(', ')}") unless allowed_values.include?(value.to_sym)
                                          end),
-          ::FastlaneCore::ConfigItem.new(key: :remove_cached_runtimes,
-                                         env_name: 'CREATE_SIMULATOR_DEVICES_REMOVE_CACHED_RUNTIMES',
-                                         description: 'Remove cached runtimes after successful installation',
+          ::FastlaneCore::ConfigItem.new(key: :timeout,
+                                         env_name: 'GATHER_SIMCTL_DIAGNOSE_TIMEOUT',
+                                         description: 'Timeout',
+                                         type: Integer,
+                                         optional: true,
+                                         default_value: 300),
+          ::FastlaneCore::ConfigItem.new(key: :include_all_device_logs,
+                                         env_name: 'GATHER_SIMCTL_DIAGNOSE_INCLUDE_ALL_DEVICE_LOGS',
+                                         description: 'Include all device logs',
                                          type: Boolean,
                                          optional: true,
-                                         default_value: true)
+                                         default_value: false),
+          ::FastlaneCore::ConfigItem.new(key: :include_booted_device_data_directory,
+                                         env_name: 'GATHER_SIMCTL_DIAGNOSE_INCLUDE_BOOTED_DEVICE_DATA_DIRECTORY',
+                                         description: 'Include booted device data directory. Warning: May include private information, app data containers, and increases the size of the archive! Default is NOT to collect the data container',
+                                         type: Boolean,
+                                         optional: true,
+                                         default_value: false)
         ]
       end
 
       def self.output
         [
-          ['AVAILABLE_SIMULATOR_DEVICES', 'A list of available simulator devices']
+          ['GATHER_SIMCTL_DIAGNOSE_OUTPUT_FILE', 'Output archive file with simctl diagnose data']
         ]
       end
 
       def self.return_value
-        'Returns a list of available simulator devices'
+        'Returns a path to the output archive file with simctl diagnose data'
       end
 
       def self.authors

@@ -189,7 +189,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       allow(Fastlane::UI).to receive(:message)
 
       # WHEN: Downloading and installing missing runtime
-      sut.download_and_install_missing_runtime(missing_runtime)
+      sut.download_and_install_missing_runtime(missing_runtime, remove_cached_runtimes: false)
 
       # THEN: Should download and then install
       expect(shell_helper).to have_received(:download_runtime).with(missing_runtime, cache_dir)
@@ -208,7 +208,7 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
       allow(Fastlane::UI).to receive(:message)
 
       # WHEN: Downloading and installing missing runtime
-      sut.download_and_install_missing_runtime(missing_runtime)
+      sut.download_and_install_missing_runtime(missing_runtime, remove_cached_runtimes: false)
 
       # THEN: Should not download but should install
       expect(shell_helper).not_to have_received(:download_runtime)
