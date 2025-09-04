@@ -18,3 +18,4 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
 /vendor/bundle
+/logs

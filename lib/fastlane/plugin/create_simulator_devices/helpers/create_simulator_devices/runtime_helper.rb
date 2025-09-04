@@ -50,7 +50,7 @@ module Fastlane
         end
 
         missing_runtimes.each do |missing_runtime|
-          download_and_install_missing_runtime(missing_runtime)
+          download_and_install_missing_runtime(missing_runtime, remove_cached_runtimes: remove_cached_runtimes)
         end
 
         # Update simctl_runtimes after installing the runtimes.
@@ -128,7 +128,7 @@ module Fastlane
         simctl_runtime
       end
 
-      def download_and_install_missing_runtime(missing_runtime)
+      def download_and_install_missing_runtime(missing_runtime, remove_cached_runtimes:)
         UI.message("Attempting to install #{missing_runtime.runtime_name} runtime.")
 
         downloaded_runtime_file = cached_runtime_file(missing_runtime)
@@ -139,6 +139,8 @@ module Fastlane
         end
 
         shell_helper.import_runtime(downloaded_runtime_file, missing_runtime.runtime_name)
+
+        FileUtils.rm_rf(downloaded_runtime_file) if remove_cached_runtimes
       end
 
       def runtime_build_version_for_filename(filename)

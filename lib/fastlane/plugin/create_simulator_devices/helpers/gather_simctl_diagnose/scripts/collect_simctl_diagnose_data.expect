@@ -1,0 +1,9 @@
+#!/usr/bin/env expect
+
+# Runs xcrun simctl diagnose with given parameters.
+# xcrun simctl diagnose needs user to press ENTER which is not possible to do in non-interactive shell.
+
+spawn xcrun simctl diagnose {*}$argv
+expect -exact "Press ENTER to continue\r\n"
+send -- "\r"
+expect eof

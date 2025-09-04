@@ -1,8 +1,22 @@
 lane :test do
+  devices = ['iPhone 16e', 'iPhone 15 (18.5)']
   devices_list = create_simulator_devices(
-    devices: ['iPhone 16e', 'iPhone 15 (18.5)'],
+    devices: devices,
     cache_dir: "#{Dir.home}/.cache/create_simulator_devices",
     verbose: false
   )
   UI.message("Devices list: #{devices_list}")
+
+  archive_path = gather_simctl_diagnose(
+    devices: devices,
+    output_dir: 'logs',
+    verbose: true,
+    timeout: 300,
+    include_all_device_logs: true,
+    include_booted_device_data_directory: true,
+    print_command: false,
+    print_command_output: false,
+    device_naming_style: 'scan'
+  )
+  UI.message("Archive path: #{archive_path}")
 end
