@@ -44,7 +44,7 @@ module Fastlane
         end
 
         # Install missing runtimes if needed.
-        runtime_helper.install_missing_runtimes(required_devices)
+        runtime_helper.install_missing_runtimes(required_devices, remove_cached_runtimes: remove_cached_runtimes)
 
         # Create missing devices for required devices.
         create_missing_devices(required_devices)

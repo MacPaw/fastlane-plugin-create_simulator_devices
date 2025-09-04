@@ -39,7 +39,7 @@ module Fastlane
         shell_helper.simctl_devices_for_runtimes(force: true)
       end
 
-      def install_missing_runtimes(required_devices)
+      def install_missing_runtimes(required_devices, remove_cached_runtimes:)
         needed_runtimes = required_devices.filter_map(&:required_runtime).uniq
 
         missing_runtimes = missing_runtimes(needed_runtimes)
