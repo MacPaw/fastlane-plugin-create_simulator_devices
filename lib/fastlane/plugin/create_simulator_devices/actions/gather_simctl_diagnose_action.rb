@@ -46,7 +46,8 @@ module Fastlane
           output_dir: params[:output_dir],
           timeout: params[:timeout],
           include_all_device_logs: params[:include_all_device_logs],
-          include_booted_device_data_directory: params[:include_booted_device_data_directory]
+          include_booted_device_data_directory: params[:include_booted_device_data_directory],
+          include_nonbooted_device_data_directory: params[:include_nonbooted_device_data_directory]
         )
 
         runner.run(required_devices)
@@ -125,6 +126,12 @@ module Fastlane
           ::FastlaneCore::ConfigItem.new(key: :include_booted_device_data_directory,
                                          env_name: 'GATHER_SIMCTL_DIAGNOSE_INCLUDE_BOOTED_DEVICE_DATA_DIRECTORY',
                                          description: 'Include booted device data directory. Warning: May include private information, app data containers, and increases the size of the archive! Default is NOT to collect the data container',
+                                         type: Boolean,
+                                         optional: true,
+                                         default_value: false),
+          ::FastlaneCore::ConfigItem.new(key: :include_nonbooted_device_data_directory,
+                                         env_name: 'GATHER_SIMCTL_DIAGNOSE_INCLUDE_NONBOOTED_DEVICE_DATA_DIRECTORY',
+                                         description: 'Include non-booted device data directory. Warning: May include private information, app data containers, and increases the size of the archive! Default is NOT to collect the data container',
                                          type: Boolean,
                                          optional: true,
                                          default_value: false)

@@ -12,7 +12,8 @@ module Fastlane
     class Runner
       UI = ::Fastlane::UI unless defined?(UI)
 
-      attr_accessor :shell_helper, :verbose, :runtime_helper, :device_naming_style, :create_simulator_devices_runner, :output_dir, :timeout, :include_all_device_logs, :include_booted_device_data_directory, :print_command, :print_command_output
+      attr_accessor :shell_helper, :verbose, :runtime_helper, :device_naming_style, :create_simulator_devices_runner, :output_dir, :timeout, :include_all_device_logs, :include_booted_device_data_directory, :print_command, :print_command_output,
+                    :include_nonbooted_device_data_directory
 
       def initialize( # rubocop:disable Metrics/ParameterLists
         runtime_helper:,
@@ -23,7 +24,8 @@ module Fastlane
         output_dir:,
         timeout:,
         include_all_device_logs:,
-        include_booted_device_data_directory:
+        include_booted_device_data_directory:,
+        include_nonbooted_device_data_directory:
       )
         self.shell_helper = shell_helper
         self.verbose = verbose
@@ -34,6 +36,7 @@ module Fastlane
         self.timeout = timeout
         self.include_all_device_logs = include_all_device_logs
         self.include_booted_device_data_directory = include_booted_device_data_directory
+        self.include_nonbooted_device_data_directory = include_nonbooted_device_data_directory
       end
 
       def run(devices) # rubocop:disable Metrics/AbcSize
@@ -82,13 +85,15 @@ module Fastlane
         archive_name = "#{temp_output_dir}.tar.gz"
         Actions.lane_context[Actions::SharedValues::GATHER_SIMCTL_DIAGNOSE_OUTPUT_FILE] = archive_name
 
-        copy_data_containers_and_logs(matched_simctl_devices, full_output_dir_path) if include_booted_device_data_directory || include_all_device_logs
+        copy_data_containers_and_logs(matched_simctl_devices, full_output_dir_path) if include_nonbooted_device_data_directory
 
         archive_name
       end
 
       def copy_data_containers_and_logs(matched_simctl_devices, output_dir)
-        matched_simctl_devices.each do |simctl_device|
+        matched_simctl_devices
+          .reject { |simctl_device| simctl_device.state == 'Booted' }
+          .each do |simctl_device|
           copy_data_container_and_logs(simctl_device, output_dir)
         end
       end
