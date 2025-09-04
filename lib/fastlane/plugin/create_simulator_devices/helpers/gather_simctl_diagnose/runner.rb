@@ -50,13 +50,17 @@ module Fastlane
         end
 
         # Return distinct matched devices strings
-        matched_devices = create_simulator_devices_runner.find_runtime_and_device_for_required_devices(required_devices)
+        matched_simctl_devices = create_simulator_devices_runner.find_runtime_and_device_for_required_devices(required_devices)
           .reject { |required_device| required_device.simctl_device.nil? }
+          .map(&:simctl_device)
 
-        matched_devices_udids = matched_devices.map { |matched_device| matched_device.simctl_device.udid }
+        matched_devices_udids = matched_simctl_devices.map(&:udid)
         UI.message("Available simulator devices: #{matched_devices_udids.join(', ')}")
 
-        temp_output_dir = "#{File.expand_path(output_dir)}/simctl_diagnose_#{Time.now.strftime('%Y%m%d%H%M%S')}"
+        full_output_dir_path = File.expand_path(output_dir)
+        temp_output_dir = "#{full_output_dir_path}/simctl_diagnose"
+
+        FileUtils.mkdir_p(temp_output_dir)
 
         diagnose_args = matched_devices_udids.map { |udid| "--udid=#{udid}" }
         diagnose_args << '-b' # Do NOT show the resulting archive in a Finder window upon completion.
@@ -68,16 +72,41 @@ module Fastlane
 
         collect_diagnose_data_script_path = File.expand_path("#{__dir__}/scripts/collect_simctl_diagnose_data.sh")
 
+        UI.message("Collecting diagnose data to #{temp_output_dir}...")
         shell_helper.sh(
           command: "SIMCTL_DIAGNOSE_OUTPUT_FOLDER=#{temp_output_dir.shellescape} #{collect_diagnose_data_script_path.shellescape} #{cmd_args}",
-          print_command: verbose,
+          print_command: true,
           print_command_output: verbose
         )
 
         archive_name = "#{temp_output_dir}.tar.gz"
         Actions.lane_context[Actions::SharedValues::GATHER_SIMCTL_DIAGNOSE_OUTPUT_FILE] = archive_name
 
+        copy_data_containers_and_logs(matched_simctl_devices, full_output_dir_path) if include_booted_device_data_directory || include_all_device_logs
+
         archive_name
+      end
+
+      def copy_data_containers_and_logs(matched_simctl_devices, output_dir)
+        matched_simctl_devices.each do |simctl_device|
+          copy_data_container_and_logs(simctl_device, output_dir)
+        end
+      end
+
+      def copy_data_container_and_logs(simctl_device, output_dir)
+        if File.exist?(simctl_device.data_path)
+          UI.message("Copying data from #{simctl_device.data_path} to #{output_dir}...")
+          shell_helper.sh(
+            command: "tar -czf #{output_dir}/#{simctl_device.name.shellescape}_#{simctl_device.udid.shellescape}_data.tar.gz --cd #{File.dirname(simctl_device.data_path).shellescape} #{File.basename(simctl_device.data_path).shellescape}"
+          )
+        end
+
+        return unless File.exist?(simctl_device.log_path)
+
+        UI.message("Copying logs from #{simctl_device.log_path} to #{output_dir}...")
+        shell_helper.sh(
+          command: "tar -czf #{output_dir}/#{simctl_device.name.shellescape}_#{simctl_device.udid.shellescape}_logs.tar.gz --cd #{File.dirname(simctl_device.log_path).shellescape} #{File.basename(simctl_device.log_path).shellescape}"
+        )
       end
     end
   end

@@ -5,13 +5,15 @@ module Fastlane
     module SimCTL
       # Represents a device.
       class Device
-        attr_accessor :udid, :name, :device_type_identifier, :available
+        attr_accessor :udid, :name, :device_type_identifier, :available, :data_path, :log_path
 
-        def initialize(name:, udid:, device_type_identifier:, available:)
+        def initialize(name:, udid:, device_type_identifier:, available:, data_path:, log_path:) # rubocop:disable Metrics/ParameterLists
           self.name = name
           self.udid = udid
           self.device_type_identifier = device_type_identifier
           self.available = available
+          self.data_path = data_path
+          self.log_path = log_path
         end
 
         def available?
@@ -27,7 +29,9 @@ module Fastlane
             name: hash[:name],
             udid: hash[:udid],
             device_type_identifier: hash[:deviceTypeIdentifier],
-            available: hash[:isAvailable]
+            available: hash[:isAvailable],
+            data_path: hash[:dataPath],
+            log_path: hash[:logPath]
           )
         end
       end
