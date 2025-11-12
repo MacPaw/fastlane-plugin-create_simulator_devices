@@ -208,15 +208,75 @@ RSpec.describe Fastlane::CreateSimulatorDevices::ShellHelper do
   end
 
   describe '#download_runtime' do
-    it 'downloads runtime platform using xcodebuild' do
+    it 'downloads runtime platform using xcodebuild (< 26)' do
       # GIVEN: Runtime platform and version details
       missing_platform = 'iOS'
       missing_version = '17.4'
       cache_dir = '/tmp/test_cache'
 
+      allow(Fastlane::Helper).to receive(:xcode_at_least?).with('26').and_return(false)
+
       missing_runtime = RequiredRuntime.new(sdk_platform: nil, os_name: missing_platform, product_version: missing_version, product_build_version: AppleBuildVersion.new('21E210'), is_latest: false)
       expect(sut).to receive(:sh).with(
         command: "xcrun xcodebuild -verbose -exportPath #{cache_dir.shellescape} -downloadPlatform #{missing_platform.shellescape} -buildVersion #{missing_version.shellescape}",
+        print_command: true,
+        print_command_output: true
+      )
+
+      # WHEN: Downloading runtime
+      sut.download_runtime(missing_runtime, cache_dir)
+
+      # THEN: Should execute the xcodebuild download command (expectation verified above)
+    end
+
+    it 'downloads runtime platform using xcodebuild (>= 26, universal)' do
+      # GIVEN: Runtime platform and version details
+      missing_platform = 'iOS'
+      missing_version = '26.1'
+      cache_dir = '/tmp/test_cache'
+
+      allow(Fastlane::Helper).to receive(:xcode_at_least?).with('26').and_return(true)
+      allow(Fastlane::Helper).to receive(:xcode_version).and_return('26.1')
+      allow(Fastlane::Helper).to receive(:xcode_path).and_return('/Applications/Xcode.app/Contents/Developer')
+
+      allow(sut).to receive(:sh).with(
+        command: 'lipo -archs /Applications/Xcode.app/Contents/MacOS/Xcode',
+        print_command: false,
+        print_command_output: false
+      ).and_return('x86_64 arm64')
+
+      missing_runtime = RequiredRuntime.new(sdk_platform: nil, os_name: missing_platform, product_version: missing_version, product_build_version: AppleBuildVersion.new('23B77'), is_latest: false)
+      expect(sut).to receive(:sh).with(
+        command: "xcrun xcodebuild -verbose -exportPath #{cache_dir.shellescape} -downloadPlatform #{missing_platform.shellescape} -buildVersion #{missing_version.shellescape} -architectureVariant universal",
+        print_command: true,
+        print_command_output: true
+      )
+
+      # WHEN: Downloading runtime
+      sut.download_runtime(missing_runtime, cache_dir)
+
+      # THEN: Should execute the xcodebuild download command (expectation verified above)
+    end
+
+    it 'downloads runtime platform using xcodebuild (>= 26, arm64)' do
+      # GIVEN: Runtime platform and version details
+      missing_platform = 'iOS'
+      missing_version = '26.1'
+      cache_dir = '/tmp/test_cache'
+
+      allow(Fastlane::Helper).to receive(:xcode_at_least?).with('26').and_return(true)
+      allow(Fastlane::Helper).to receive(:xcode_version).and_return('26.1')
+      allow(Fastlane::Helper).to receive(:xcode_path).and_return('/Applications/Xcode.app/Contents/Developer')
+
+      allow(sut).to receive(:sh).with(
+        command: 'lipo -archs /Applications/Xcode.app/Contents/MacOS/Xcode',
+        print_command: false,
+        print_command_output: false
+      ).and_return('arm64')
+
+      missing_runtime = RequiredRuntime.new(sdk_platform: nil, os_name: missing_platform, product_version: missing_version, product_build_version: AppleBuildVersion.new('23B77'), is_latest: false)
+      expect(sut).to receive(:sh).with(
+        command: "xcrun xcodebuild -verbose -exportPath #{cache_dir.shellescape} -downloadPlatform #{missing_platform.shellescape} -buildVersion #{missing_version.shellescape} -architectureVariant arm64",
         print_command: true,
         print_command_output: true
       )
