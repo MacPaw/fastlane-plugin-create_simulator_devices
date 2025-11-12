@@ -9,7 +9,7 @@ module Fastlane
   # Create simulator devices.
   module CreateSimulatorDevices
     # Does all the work to create simulator devices.
-    class Runner # rubocop:disable Metrics/ClassLength
+    class Runner
       UI = ::Fastlane::UI unless defined?(UI)
 
       attr_accessor :shell_helper, :verbose, :runtime_helper, :can_rename_devices, :can_delete_duplicate_devices, :device_naming_style, :remove_cached_runtimes
