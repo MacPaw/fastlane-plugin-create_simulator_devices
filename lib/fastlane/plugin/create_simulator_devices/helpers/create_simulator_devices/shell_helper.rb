@@ -104,6 +104,17 @@ module Fastlane
         @simctl_runtimes
       end
 
+      def simctl_matched_runtimes(force: false)
+        return @simctl_matched_runtimes unless force || @simctl_matched_runtimes.nil?
+
+        UI.message('Fetching matched runtimes...')
+        json = sh(command: 'xcrun simctl runtime match list --json')
+
+        @simctl_matched_runtimes = JSON
+          .parse(json, symbolize_names: true)
+          .map { |identifier, runtime| SimCTL::MatchedRuntime.from_hash(runtime, identifier: identifier) }
+      end
+
       def installed_runtimes_with_state
         UI.message('Fetching runtimes with state...')
         json = sh(command: 'xcrun simctl runtime list --json')

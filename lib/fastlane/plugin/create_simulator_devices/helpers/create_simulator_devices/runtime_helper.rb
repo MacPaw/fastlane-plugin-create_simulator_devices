@@ -25,6 +25,13 @@ module Fastlane
         'xrsimulator' => 'xrOS'
       }.freeze
 
+      OS_NAME_TO_MATCHED_RUNTIME_IDENTIFIER = {
+        'iOS' => 'iphoneos',
+        'tvOS' => 'appletvos',
+        'watchOS' => 'watchos',
+        'xrOS' => 'xros'
+      }.freeze
+
       def delete_unusable_runtimes
         deletable_runtimes = shell_helper.installed_runtimes_with_state
           .select { |runtime| runtime.unusable? && runtime.deletable? }
@@ -153,6 +160,16 @@ module Fastlane
         AppleBuildVersion.new(build_version)
       end
 
+      def matched_runtime_for_missing_runtime(missing_runtime)
+        matched_runtimes = shell_helper.simctl_matched_runtimes(force: true)
+
+        matched_runtime_identifier = "#{OS_NAME_TO_MATCHED_RUNTIME_IDENTIFIER[missing_runtime.os_name]}#{missing_runtime.product_version}"
+
+        matched_runtimes = matched_runtimes.select { |matched_runtime| matched_runtime.identifier == matched_runtime_identifier && matched_runtime.sdk_build == missing_runtime.product_build_version }
+
+        matched_runtimes.max_by(&:chosen_runtime_build)
+      end
+
       def cached_runtime_file(missing_runtime)
         FileUtils.mkdir_p(cache_dir)
 
@@ -164,10 +181,10 @@ module Fastlane
         # E.g. Xcode 26.0 Beta 3 has iOS 26.0 (23A5287e) SDK, but
         # xcodebuild downloads iphonesimulator_26.0_23A5287g.dmg as latest.
         product_build_version = missing_runtime.product_build_version
+
         if product_build_version
           runtime_dmg_search_pattern += product_build_version.major.to_s
           runtime_dmg_search_pattern += product_build_version.minor.to_s
-          runtime_dmg_search_pattern += product_build_version.patch.to_s
         end
         runtime_dmg_search_pattern += '*.dmg'
 
@@ -177,9 +194,17 @@ module Fastlane
           UI.message("Available files with pattern: #{Dir.glob(runtime_dmg_search_pattern)}")
         end
 
-        runtime_file = Dir
+        runtime_file = nil
+        runtime_files = Dir
           .glob(runtime_dmg_search_pattern)
-          .max_by { |filename| runtime_build_version_for_filename(filename) }
+
+        return nil if runtime_files.empty?
+
+        matched_runtime = matched_runtime_for_missing_runtime(missing_runtime)
+
+        runtime_file = runtime_files.detect { |filename| filename.end_with?("_#{matched_runtime.chosen_runtime_build}.dmg") } unless matched_runtime.nil?
+
+        runtime_file ||= runtime_files.max_by { |filename| runtime_build_version_for_filename(filename) }
 
         return nil if runtime_file.nil?
 

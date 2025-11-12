@@ -7,6 +7,7 @@ require 'rspec'
 RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
   AppleBuildVersion = Fastlane::CreateSimulatorDevices::AppleBuildVersion
   RequiredRuntime = Fastlane::CreateSimulatorDevices::RequiredRuntime
+  MatchedRuntime = Fastlane::CreateSimulatorDevices::SimCTL::MatchedRuntime
   RequiredDevice = Fastlane::CreateSimulatorDevices::RequiredDevice
   SimCTL = Fastlane::CreateSimulatorDevices::SimCTL
   Xcodebuild = Fastlane::CreateSimulatorDevices::Xcodebuild
@@ -242,12 +243,13 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
                                         product_build_version: AppleBuildVersion.new('21A326'),
                                         runtime_name: 'iOS 17.0')
 
-      existing_file = '/tmp/test_cache/iphonesimulator_17.0.1_21A326.dmg'
+      existing_file = '/tmp/test_cache/iphonesimulator_17.0.1_21A327.dmg'
 
       allow(FileUtils).to receive(:mkdir_p).with(cache_dir)
-      allow(Dir).to receive(:glob).with('/tmp/test_cache/iphonesimulator_17.0*_21A326*.dmg').and_return([existing_file])
+      allow(Dir).to receive(:glob).with('/tmp/test_cache/iphonesimulator_17.0*_21A*.dmg').and_return([existing_file])
       allow(sut).to receive(:runtime_build_version_for_filename).and_return(AppleBuildVersion.new('21A326'))
       allow(Fastlane::UI).to receive(:message)
+      allow(sut).to receive(:matched_runtime_for_missing_runtime).and_return(instance_double(MatchedRuntime, chosen_runtime_build: '21A327'))
 
       # WHEN: Finding cached runtime file
       result = sut.cached_runtime_file(missing_runtime)
