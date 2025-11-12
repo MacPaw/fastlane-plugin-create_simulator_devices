@@ -11,9 +11,10 @@ module Fastlane
       UI = ::Fastlane::UI unless defined?(UI)
 
       # Proprty verbose
-      attr_accessor :print_command, :print_command_output, :action_context
+      attr_accessor :verbose, :print_command, :print_command_output, :action_context
 
-      def initialize(print_command: false, print_command_output: false, action_context: nil)
+      def initialize(verbose: false, print_command: false, print_command_output: false, action_context: nil)
+        self.verbose = verbose
         self.print_command = print_command
         self.print_command_output = print_command_output
         self.action_context = action_context
@@ -141,8 +142,6 @@ module Fastlane
       end
 
       def download_runtime(missing_runtime, cache_dir)
-        UI.message("Downloading #{missing_runtime.runtime_name} to #{cache_dir}. This may take a while...")
-
         command = [
           'xcrun',
           'xcodebuild',
@@ -161,6 +160,30 @@ module Fastlane
           command << '-buildVersion'
           command << missing_runtime.product_version.to_s.shellescape
         end
+
+        simulator_architecture_variant = 'universal'
+
+        if Fastlane::Helper.xcode_at_least?('26') && missing_runtime.product_version >= '26'
+          xcode_binary_path = File.join(Fastlane::Helper.xcode_path, '..', 'MacOS', 'Xcode')
+          xcode_binary_path = File.expand_path(xcode_binary_path)
+
+          UI.message('Getting Xcode architecture variants with lipo...') if verbose
+
+          xcode_architecture_variants = sh(command: "lipo -archs #{xcode_binary_path.shellescape}", print_command: print_command, print_command_output: print_command_output).split
+
+          UI.message("Xcode architecture variants: #{xcode_architecture_variants}") if verbose
+
+          simulator_architecture_variant = if xcode_architecture_variants.include?('x86_64')
+                                             'universal'
+                                           else
+                                             'arm64'
+                                           end
+
+          command << '-architectureVariant'
+          command << simulator_architecture_variant.shellescape
+        end
+
+        UI.message("Downloading #{missing_runtime.runtime_name} (arch: #{simulator_architecture_variant}) to #{cache_dir}. This may take a while...")
 
         sh(command: command.join(' '), print_command: true, print_command_output: true)
       end

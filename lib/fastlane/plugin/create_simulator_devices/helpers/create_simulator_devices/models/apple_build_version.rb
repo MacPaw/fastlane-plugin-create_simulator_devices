@@ -62,15 +62,15 @@ module Fastlane
       end
 
       def major
-        @build_version.match(/^([0-9]+)([A-Z][0-9]{2,3})([0-9]+)/)[1]
+        @build_version.match(/^([0-9]+)([A-Z][0-9]{1,3})([0-9]+)/)[1]
       end
 
       def minor
-        @build_version.match(/^([0-9]+)([A-Z][0-9]{2,3})([0-9]+)/)[2]
+        @build_version.match(/^([0-9]+)([A-Z][0-9]{1,3})([0-9]+)/)[2]
       end
 
       def patch
-        @build_version.match(/^([0-9]+)([A-Z][0-9]{2,3})([0-9]+)/)[3]
+        @build_version.match(/^([0-9]+)([A-Z][0-9]{1,3})([0-9]+)/)[3]
       end
 
       def <(other)

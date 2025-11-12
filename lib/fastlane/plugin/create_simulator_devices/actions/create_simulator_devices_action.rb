@@ -22,7 +22,7 @@ module Fastlane
         required_devices = params[:devices]
         UI.user_error!('No devices specified') if required_devices.nil? || required_devices.empty?
 
-        shell_helper = CreateSimulatorDevices::ShellHelper.new(print_command: params[:print_command], print_command_output: params[:print_command_output], action_context: self)
+        shell_helper = CreateSimulatorDevices::ShellHelper.new(verbose: verbose, print_command: params[:print_command], print_command_output: params[:print_command_output], action_context: self)
         runtime_helper = CreateSimulatorDevices::RuntimeHelper.new(cache_dir: params[:cache_dir], shell_helper: shell_helper, verbose: verbose)
 
         runner = CreateSimulatorDevices::Runner.new(
