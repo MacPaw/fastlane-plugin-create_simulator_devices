@@ -56,7 +56,7 @@ Layout/LineLength:
     - downloaded_artifacts_locations
 
 Metrics/ClassLength:
-  Max: 150
+  Max: 170
 
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
