@@ -9,6 +9,7 @@ require_relative 'models/required_device'
 require_relative 'models/required_runtime'
 require_relative 'models/apple_build_version'
 require_relative 'models/device_naming_style'
+require_relative 'models/simctl/matched_runtime'
 require 'fastlane'
 
 module Fastlane
