@@ -12,9 +12,9 @@ module Fastlane
     class Runner
       UI = ::Fastlane::UI unless defined?(UI)
 
-      attr_accessor :shell_helper, :verbose, :runtime_helper, :can_rename_devices, :can_delete_duplicate_devices, :device_naming_style, :remove_cached_runtimes
+      attr_accessor :shell_helper, :verbose, :runtime_helper, :can_rename_devices, :can_delete_duplicate_devices, :device_naming_style, :remove_cached_runtimes, :update_dyld_shared_cache
 
-      def initialize(runtime_helper:, shell_helper:, verbose:, can_rename_devices:, can_delete_duplicate_devices:, device_naming_style:, remove_cached_runtimes:) # rubocop:disable Metrics/ParameterLists
+      def initialize(runtime_helper:, shell_helper:, verbose:, can_rename_devices:, can_delete_duplicate_devices:, device_naming_style:, remove_cached_runtimes:, update_dyld_shared_cache:) # rubocop:disable Metrics/ParameterLists
         self.shell_helper = shell_helper
         self.verbose = verbose
         self.runtime_helper = runtime_helper
@@ -22,6 +22,7 @@ module Fastlane
         self.can_delete_duplicate_devices = can_delete_duplicate_devices
         self.device_naming_style = device_naming_style
         self.remove_cached_runtimes = remove_cached_runtimes
+        self.update_dyld_shared_cache = update_dyld_shared_cache
       end
 
       def run(devices)
@@ -54,6 +55,11 @@ module Fastlane
           .reject { |required_device| required_device.simctl_device.nil? }
 
         log_matched_devices(matched_devices: matched_devices)
+
+        if update_dyld_shared_cache
+          UI.message('Updating dyld shared cache...')
+          shell_helper.update_dyld_shared_cache
+        end
 
         matched_devices_names = matched_devices.map { |matched_device| returning_device_name_for_required_device(matched_device) }
         UI.message("Available simulator devices: #{matched_devices_names.join(', ')}")

@@ -198,6 +198,12 @@ module Fastlane
         end
       end
 
+      def update_dyld_shared_cache
+        sh(
+          command: 'xcrun simctl runtime dyld_shared_cache update --all'
+        )
+      end
+
       def device_info_by_udid(udid)
         sh(
           command: "xcrun simctl list devices --json | jq '.devices | to_entries[].value[] | select(.udid==\"#{udid.shellescape}\")'",

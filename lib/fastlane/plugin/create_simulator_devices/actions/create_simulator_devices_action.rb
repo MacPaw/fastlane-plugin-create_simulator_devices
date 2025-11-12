@@ -32,7 +32,8 @@ module Fastlane
           can_rename_devices: params[:rename_devices],
           can_delete_duplicate_devices: params[:delete_duplicate_devices],
           device_naming_style: params[:device_naming_style].to_sym,
-          remove_cached_runtimes: params[:remove_cached_runtimes]
+          remove_cached_runtimes: params[:remove_cached_runtimes],
+          update_dyld_shared_cache: params[:update_dyld_shared_cache]
         )
 
         runner.run(required_devices)
@@ -113,7 +114,13 @@ module Fastlane
                                          description: 'Remove cached runtimes after successful installation',
                                          type: Boolean,
                                          optional: true,
-                                         default_value: true)
+                                         default_value: true),
+          ::FastlaneCore::ConfigItem.new(key: :update_dyld_shared_cache,
+                                         env_name: 'CREATE_SIMULATOR_DEVICES_UPDATE_DYLD_SHARED_CACHE',
+                                         description: 'Update dyld shared cache',
+                                         type: Boolean,
+                                         optional: true,
+                                         default_value: false)
         ]
       end
 
