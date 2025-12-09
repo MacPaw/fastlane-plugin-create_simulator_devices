@@ -8,14 +8,15 @@ module Fastlane
     module SimCTL
       # Represents a runtime from `xcrun simctl runtime list --json` output.
       class RuntimeWithState
-        attr_accessor :identifier, :version, :build, :state, :deletable
+        attr_accessor :identifier, :version, :build, :state, :deletable, :runtime_identifier
 
-        def initialize(identifier:, version:, build:, state:, deletable:)
+        def initialize(identifier:, version:, build:, state:, deletable:, runtime_identifier:) # rubocop:disable Metrics/ParameterLists
           self.identifier = identifier
           self.version = version
           self.build = build
           self.state = state
           self.deletable = deletable
+          self.runtime_identifier = runtime_identifier
         end
 
         def ready?
@@ -32,11 +33,12 @@ module Fastlane
 
         def self.from_hash(hash)
           new(
-            identifier: hash[:identifier],
+            identifier: hash[:identifier].to_s,
             version: Gem::Version.new(hash[:version]),
             build: AppleBuildVersion.new(hash[:build]),
-            state: hash[:state],
-            deletable: hash[:deletable]
+            state: hash[:state].to_s,
+            deletable: hash[:deletable],
+            runtime_identifier: hash[:runtimeIdentifier].to_s
           )
         end
       end

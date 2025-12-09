@@ -104,6 +104,11 @@ module Fastlane
         @simctl_runtimes
       end
 
+      def simctl_delete_runtime(identifier:)
+        UI.message("Deleting runtime #{identifier}...")
+        sh(command: "xcrun simctl runtime delete #{identifier.shellescape}")
+      end
+
       def simctl_matched_runtimes(force: false)
         return @simctl_matched_runtimes unless force || @simctl_matched_runtimes.nil?
 

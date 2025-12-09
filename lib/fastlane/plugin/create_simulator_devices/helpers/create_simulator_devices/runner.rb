@@ -12,9 +12,9 @@ module Fastlane
     class Runner
       UI = ::Fastlane::UI unless defined?(UI)
 
-      attr_accessor :shell_helper, :verbose, :runtime_helper, :can_rename_devices, :can_delete_duplicate_devices, :device_naming_style, :remove_cached_runtimes, :update_dyld_shared_cache
+      attr_accessor :shell_helper, :verbose, :runtime_helper, :can_rename_devices, :can_delete_duplicate_devices, :device_naming_style, :remove_cached_runtimes, :update_dyld_shared_cache, :delete_unused_runtimes
 
-      def initialize(runtime_helper:, shell_helper:, verbose:, can_rename_devices:, can_delete_duplicate_devices:, device_naming_style:, remove_cached_runtimes:, update_dyld_shared_cache:) # rubocop:disable Metrics/ParameterLists
+      def initialize(runtime_helper:, shell_helper:, verbose:, can_rename_devices:, can_delete_duplicate_devices:, device_naming_style:, remove_cached_runtimes:, update_dyld_shared_cache:, delete_unused_runtimes:) # rubocop:disable Metrics/ParameterLists
         self.shell_helper = shell_helper
         self.verbose = verbose
         self.runtime_helper = runtime_helper
@@ -23,6 +23,7 @@ module Fastlane
         self.device_naming_style = device_naming_style
         self.remove_cached_runtimes = remove_cached_runtimes
         self.update_dyld_shared_cache = update_dyld_shared_cache
+        self.delete_unused_runtimes = delete_unused_runtimes
       end
 
       def run(devices)
@@ -45,7 +46,7 @@ module Fastlane
         end
 
         # Install missing runtimes if needed.
-        runtime_helper.install_missing_runtimes(required_devices, remove_cached_runtimes: remove_cached_runtimes)
+        runtime_helper.install_missing_runtimes(required_devices, remove_cached_runtimes: remove_cached_runtimes, remove_unused_runtimes: delete_unused_runtimes)
 
         # Create missing devices for required devices.
         create_missing_devices(required_devices)
@@ -196,6 +197,8 @@ module Fastlane
 
         UI.message('Creating missing devices')
         missing_devices.each do |missing_device|
+          next if missing_device.simctl_runtime.nil?
+
           shell_helper.create_device(
             device_name_for_required_device(missing_device),
             missing_device.device_type.identifier,

@@ -7,7 +7,7 @@ require_relative 'shell_helper'
 module Fastlane
   module CreateSimulatorDevices
     # Helper class for managing simulator runtimes.
-    class RuntimeHelper
+    class RuntimeHelper # rubocop:disable Metrics/ClassLength
       UI = ::Fastlane::UI unless defined?(UI)
 
       attr_accessor :cache_dir, :shell_helper, :verbose
@@ -46,13 +46,14 @@ module Fastlane
         shell_helper.simctl_devices_for_runtimes(force: true)
       end
 
-      def install_missing_runtimes(required_devices, remove_cached_runtimes:)
+      def install_missing_runtimes(required_devices, remove_cached_runtimes:, remove_unused_runtimes:)
         needed_runtimes = required_devices.filter_map(&:required_runtime).uniq
 
         missing_runtimes = missing_runtimes(needed_runtimes)
 
         if missing_runtimes.empty?
           UI.message('All required runtimes are present. Skipping runtime installation...') if verbose
+          delete_unused_runtimes(needed_runtimes) if remove_unused_runtimes
           return
         end
 
@@ -73,6 +74,41 @@ module Fastlane
           .each do |missing_runtime|
             UI.important("Failed to find/download/install runtime #{missing_runtime.runtime_name}")
           end
+
+        delete_unused_runtimes(needed_runtimes) if remove_unused_runtimes
+      end
+
+      def delete_unused_runtimes(needed_runtimes)
+        UI.message('Deleting unused runtimes...')
+        available_simctl_runtimes = shell_helper.simctl_runtimes
+
+        needed_simctl_runtimes = needed_runtimes.map do |needed_runtime|
+          # Check if available runtimes contain the needed runtime.
+          simctl_runtime_matching_needed_runtime?(needed_runtime)
+        end
+
+        unused_simctl_runtimes = available_simctl_runtimes.reject do |available_simctl_runtime|
+          needed_simctl_runtimes.any? do |needed_simctl_runtime|
+            needed_simctl_runtime.identifier == available_simctl_runtime.identifier
+          end
+        end
+
+        unused_simctl_runtimes = unused_simctl_runtimes.filter_map do |unused_simctl_runtime|
+          shell_helper.installed_runtimes_with_state.detect do |installed_simctl_runtime|
+            installed_simctl_runtime.runtime_identifier == unused_simctl_runtime.identifier
+          end
+        end
+
+        return if unused_simctl_runtimes.empty?
+
+        unused_simctl_runtimes.each do |unused_simctl_runtime|
+          puts "Deleting unused runtime #{unused_simctl_runtime.runtime_identifier} (#{unused_simctl_runtime.identifier})..."
+          shell_helper.simctl_delete_runtime(identifier: unused_simctl_runtime.identifier)
+        end
+
+        shell_helper.installed_runtimes_with_state
+        shell_helper.simctl_runtimes(force: true)
+        shell_helper.simctl_devices_for_runtimes(force: true)
       end
 
       def missing_runtimes(needed_runtimes)
