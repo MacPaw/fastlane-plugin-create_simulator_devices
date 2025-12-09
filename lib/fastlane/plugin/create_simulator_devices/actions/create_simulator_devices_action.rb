@@ -33,7 +33,8 @@ module Fastlane
           can_delete_duplicate_devices: params[:delete_duplicate_devices],
           device_naming_style: params[:device_naming_style].to_sym,
           remove_cached_runtimes: params[:remove_cached_runtimes],
-          update_dyld_shared_cache: params[:update_dyld_shared_cache]
+          update_dyld_shared_cache: params[:update_dyld_shared_cache],
+          delete_unused_runtimes: params[:delete_unused_runtimes]
         )
 
         runner.run(required_devices)
@@ -118,6 +119,12 @@ module Fastlane
           ::FastlaneCore::ConfigItem.new(key: :update_dyld_shared_cache,
                                          env_name: 'CREATE_SIMULATOR_DEVICES_UPDATE_DYLD_SHARED_CACHE',
                                          description: 'Update dyld shared cache',
+                                         type: Boolean,
+                                         optional: true,
+                                         default_value: false),
+          ::FastlaneCore::ConfigItem.new(key: :delete_unused_runtimes,
+                                         env_name: 'CREATE_SIMULATOR_DEVICES_DELETE_UNUSED_RUNTIMES',
+                                         description: 'Delete unused runtimes',
                                          type: Boolean,
                                          optional: true,
                                          default_value: false)

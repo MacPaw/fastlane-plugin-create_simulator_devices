@@ -1,22 +1,39 @@
+# frozen_string_literal: true
+
+require 'fastlane'
+
 lane :test do
-  devices = ['iPhone 16e', 'iPhone 15 (18.5)']
+  devices = ['iPhone 16e', 'Apple Watch Series 11 (46mm) (11.5)']
   devices_list = create_simulator_devices(
     devices: devices,
     cache_dir: "#{Dir.home}/.cache/create_simulator_devices",
+    remove_cached_runtimes: false,
+    delete_unused_runtimes: true,
     verbose: false
   )
   UI.message("Devices list: #{devices_list}")
 
-  archive_path = gather_simctl_diagnose(
-    devices: devices,
-    output_dir: 'logs',
+  devices_list = create_simulator_devices(
+    devices: devices.first,
+    cache_dir: "#{Dir.home}/.cache/create_simulator_devices",
+    remove_cached_runtimes: false,
+    delete_unused_runtimes: true,
     verbose: true,
-    timeout: 300,
-    include_all_device_logs: true,
-    include_booted_device_data_directory: true,
-    print_command: false,
-    print_command_output: false,
-    device_naming_style: 'scan'
+    print_command: true,
+    print_command_output: true
   )
-  UI.message("Archive path: #{archive_path}")
+  UI.message("Devices list: #{devices_list}")
+
+  # archive_path = gather_simctl_diagnose(
+  #   devices: devices,
+  #   output_dir: 'logs',
+  #   verbose: true,
+  #   timeout: 300,
+  #   include_all_device_logs: true,
+  #   include_booted_device_data_directory: true,
+  #   print_command: false,
+  #   print_command_output: false,
+  #   device_naming_style: 'scan'
+  # )
+  # UI.message("Archive path: #{archive_path}")
 end

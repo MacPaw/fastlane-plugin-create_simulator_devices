@@ -10,7 +10,6 @@ require_relative '../helpers/gather_simctl_diagnose/runner'
 module Fastlane
   module Actions
     GatherSimctlDiagnose = ::Fastlane::GatherSimctlDiagnose
-    CreateSimulatorDevices = ::Fastlane::CreateSimulatorDevices
 
     # Gather simctl diagnose data.
     class GatherSimctlDiagnoseAction < Fastlane::Action
@@ -34,7 +33,9 @@ module Fastlane
           can_rename_devices: false,
           can_delete_duplicate_devices: false,
           device_naming_style: params[:device_naming_style].to_sym,
-          remove_cached_runtimes: false
+          remove_cached_runtimes: false,
+          update_dyld_shared_cache: false,
+          delete_unused_runtimes: false
         )
 
         runner = GatherSimctlDiagnose::Runner.new(
