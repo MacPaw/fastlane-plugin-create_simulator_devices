@@ -46,14 +46,14 @@ module Fastlane
         shell_helper.simctl_devices_for_runtimes(force: true)
       end
 
-      def install_missing_runtimes(required_devices, remove_cached_runtimes:, remove_unused_runtimes:)
+      def install_missing_runtimes(required_devices, remove_cached_runtimes:, delete_unused_runtimes:)
         needed_runtimes = required_devices.filter_map(&:required_runtime).uniq
 
         missing_runtimes = missing_runtimes(needed_runtimes)
 
         if missing_runtimes.empty?
           UI.message('All required runtimes are present. Skipping runtime installation...') if verbose
-          delete_unused_runtimes(needed_runtimes) if remove_unused_runtimes
+          delete_unused_runtimes(needed_runtimes) if delete_unused_runtimes
           return
         end
 
@@ -62,6 +62,7 @@ module Fastlane
         end
 
         # Update simctl_runtimes after installing the runtimes.
+        shell_helper.stop_core_simulator_services
         shell_helper.installed_runtimes_with_state
         shell_helper.simctl_runtimes(force: true)
         shell_helper.simctl_devices_for_runtimes(force: true)
@@ -75,7 +76,7 @@ module Fastlane
             UI.important("Failed to find/download/install runtime #{missing_runtime.runtime_name}")
           end
 
-        delete_unused_runtimes(needed_runtimes) if remove_unused_runtimes
+        delete_unused_runtimes(needed_runtimes) if delete_unused_runtimes
       end
 
       def delete_unused_runtimes(needed_runtimes)
@@ -106,6 +107,7 @@ module Fastlane
           shell_helper.simctl_delete_runtime(identifier: unused_simctl_runtime.identifier)
         end
 
+        shell_helper.stop_core_simulator_services
         shell_helper.installed_runtimes_with_state
         shell_helper.simctl_runtimes(force: true)
         shell_helper.simctl_devices_for_runtimes(force: true)
