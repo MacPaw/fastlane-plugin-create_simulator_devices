@@ -7,7 +7,7 @@ module Fastlane
   # Create simulator devices.
   module CreateSimulatorDevices
     # Shell helper
-    class ShellHelper
+    class ShellHelper # rubocop:disable Metrics/ClassLength
       UI = ::Fastlane::UI unless defined?(UI)
 
       # Proprty verbose
@@ -20,7 +20,7 @@ module Fastlane
         self.action_context = action_context
       end
 
-      def sh(command:, print_command: self.print_command, print_command_output: self.print_command_output)
+      def _sh(command:, print_command: self.print_command, print_command_output: self.print_command_output)
         if action_context
           action_context.sh(command, print_command: print_command, print_command_output: print_command_output)
         else
@@ -39,6 +39,18 @@ module Fastlane
             raise StandardError, error_message
           end
         end
+      end
+
+      def sh(command:, print_command: self.print_command, print_command_output: self.print_command_output, retry_count: 0, retry_delay: nil)
+        _sh(command: command, print_command: print_command, print_command_output: print_command_output)
+      rescue StandardError => e
+        raise e unless retry_count.positive?
+
+        retry_delay ||= 60
+        retry_count -= 1
+        UI.important("Retrying command #{command} in #{retry_delay} seconds (remaining retries: #{retry_count})...")
+        sleep retry_delay
+        sh(command: command, print_command: true, print_command_output: true, retry_count: retry_count, retry_delay: retry_delay)
       end
 
       def stop_core_simulator_services
@@ -120,9 +132,13 @@ module Fastlane
           .map { |identifier, runtime| SimCTL::MatchedRuntime.from_hash(runtime, identifier: identifier) }
       end
 
-      def installed_runtimes_with_state
+      def installed_runtimes_with_state(retry_count: 0, retry_delay: nil)
         UI.message('Fetching runtimes with state...')
-        json = sh(command: 'xcrun simctl runtime list --json')
+        json = sh(
+          command: 'xcrun simctl runtime list --json',
+          retry_count: retry_count,
+          retry_delay: retry_delay
+        )
 
         JSON
           .parse(json, symbolize_names: true)
