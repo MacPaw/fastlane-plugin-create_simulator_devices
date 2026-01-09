@@ -93,9 +93,7 @@ module Fastlane
       def copy_data_containers_and_logs(matched_simctl_devices, output_dir)
         matched_simctl_devices
           .reject { |simctl_device| simctl_device.state == 'Booted' }
-          .each do |simctl_device|
-          copy_data_container_and_logs(simctl_device, output_dir)
-        end
+          .each { |simctl_device| copy_data_container_and_logs(simctl_device, output_dir) }
       end
 
       def copy_data_container_and_logs(simctl_device, output_dir)

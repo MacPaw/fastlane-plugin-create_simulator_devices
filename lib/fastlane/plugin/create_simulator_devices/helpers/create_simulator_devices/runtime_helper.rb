@@ -100,15 +100,17 @@ module Fastlane
           end
         end
 
+        unused_simctl_runtimes.uniq!(&:identifier)
+
         return if unused_simctl_runtimes.empty?
 
         unused_simctl_runtimes.each do |unused_simctl_runtime|
-          puts "Deleting unused runtime #{unused_simctl_runtime.runtime_identifier} (#{unused_simctl_runtime.identifier})..."
+          UI.message("Deleting unused runtime #{unused_simctl_runtime.runtime_identifier} (#{unused_simctl_runtime.identifier})...")
           shell_helper.simctl_delete_runtime(identifier: unused_simctl_runtime.identifier)
         end
 
         shell_helper.stop_core_simulator_services
-        shell_helper.installed_runtimes_with_state
+        shell_helper.installed_runtimes_with_state(retry_count: 3, retry_delay: 60)
         shell_helper.simctl_runtimes(force: true)
         shell_helper.simctl_devices_for_runtimes(force: true)
       end
