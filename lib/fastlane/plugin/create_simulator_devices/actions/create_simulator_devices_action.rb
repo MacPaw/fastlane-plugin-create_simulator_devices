@@ -108,7 +108,7 @@ module Fastlane
                                          default_value: CreateSimulatorDevices::DeviceNamingStyle::SCAN.to_s,
                                          verify_block: proc do |value|
                                            allowed_values = CreateSimulatorDevices::DeviceNamingStyle::ALL
-                                           UI.user_error!("Invalid device naming style: #{value}. Allowed values: #{allowed_values.map(&:to_s).join(', ')}") unless allowed_values.include?(value.to_sym)
+                                           UI.user_error!("Invalid device naming style: #{value}. Allowed values: #{allowed_values.join(', ')}") unless allowed_values.include?(value.to_sym)
                                          end),
           ::FastlaneCore::ConfigItem.new(key: :remove_cached_runtimes,
                                          env_name: 'CREATE_SIMULATOR_DEVICES_REMOVE_CACHED_RUNTIMES',
