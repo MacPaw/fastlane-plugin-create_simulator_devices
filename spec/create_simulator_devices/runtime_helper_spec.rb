@@ -64,6 +64,35 @@ RSpec.describe Fastlane::CreateSimulatorDevices::RuntimeHelper do
     end
   end
 
+  describe '#delete_unused_runtimes' do
+    it 'skips missing needed runtimes when deleting unused runtimes' do
+      # GIVEN: A mix of needed runtimes where one runtime is still missing
+      needed_runtime = instance_double(RequiredRuntime)
+      missing_runtime = instance_double(RequiredRuntime)
+
+      matched_simctl_runtime = instance_double(Runtime, identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-18-0')
+      unused_simctl_runtime = instance_double(Runtime, identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-17-0')
+      installed_unused_runtime = instance_double(RuntimeWithState, runtime_identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-17-0', identifier: 'runtime-17')
+
+      allow(shell_helper).to receive(:simctl_runtimes).with(no_args).and_return([matched_simctl_runtime, unused_simctl_runtime])
+      allow(shell_helper).to receive(:installed_runtimes_with_state).with(no_args).and_return([installed_unused_runtime])
+      allow(shell_helper).to receive(:installed_runtimes_with_state).with(retry_count: 3, retry_delay: 60)
+      allow(shell_helper).to receive(:simctl_delete_runtime)
+      allow(shell_helper).to receive(:stop_core_simulator_services)
+      allow(shell_helper).to receive(:simctl_runtimes).with(force: true)
+      allow(shell_helper).to receive(:simctl_devices_for_runtimes).with(force: true)
+
+      allow(sut).to receive(:simctl_runtime_matching_needed_runtime?).with(needed_runtime).and_return(matched_simctl_runtime)
+      allow(sut).to receive(:simctl_runtime_matching_needed_runtime?).with(missing_runtime).and_return(nil)
+
+      # WHEN: Deleting unused runtimes
+      expect { sut.delete_unused_runtimes([needed_runtime, missing_runtime]) }.not_to raise_error
+
+      # THEN: It should still delete real unused runtimes and not crash on missing matches
+      expect(shell_helper).to have_received(:simctl_delete_runtime).with(identifier: 'runtime-17')
+    end
+  end
+
   describe '#missing_runtimes' do
     it 'returns runtimes that are not available' do
       # GIVEN: Needed runtimes with one missing
