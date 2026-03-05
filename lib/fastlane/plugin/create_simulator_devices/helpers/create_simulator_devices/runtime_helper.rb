@@ -83,7 +83,7 @@ module Fastlane
         UI.message('Deleting unused runtimes...')
         available_simctl_runtimes = shell_helper.simctl_runtimes
 
-        needed_simctl_runtimes = needed_runtimes.map do |needed_runtime|
+        needed_simctl_runtimes = needed_runtimes.filter_map do |needed_runtime|
           # Check if available runtimes contain the needed runtime.
           simctl_runtime_matching_needed_runtime?(needed_runtime)
         end
