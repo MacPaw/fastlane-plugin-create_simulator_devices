@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.required_ruby_version = Gem::Version.new(File.read(File.join(__dir__, '.ruby-version')).chomp).approximate_recommendation
+  spec.required_ruby_version = '>= 3.3'
 
   # Don't add a dependency to fastlane or fastlane_re
   # since this would cause a circular dependency
