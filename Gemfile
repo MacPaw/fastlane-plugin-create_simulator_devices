@@ -35,6 +35,9 @@ gem 'ostruct'
 # Until Fastlane suports Ruby 3.5 oficially and includes gems below directly.
 gem 'logger'
 
+# CFPropertyList uses it.
+gem 'nkf'
+
 gemspec
 
 plugins_path = File.join(File.dirname(__FILE__), 'fastlane', 'Pluginfile')
