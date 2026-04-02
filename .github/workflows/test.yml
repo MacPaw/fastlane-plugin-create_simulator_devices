@@ -23,7 +23,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gem-
     - name: Set up Ruby
-      uses: ruby/setup-ruby@19a43a6a2428d455dbd1b85344698725179c9d8c
+      uses: ruby/setup-ruby@3ff19f5e2baf30647122352b96108b1fbe250c64
       with:
         bundler-cache: true
     - name: Install dependencies
