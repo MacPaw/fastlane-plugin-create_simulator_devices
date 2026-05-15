@@ -1,5 +1,7 @@
 # create_simulator_devices plugin
 
+![Fastlane Create Simulator Devices](.github/header.png)
+
 [![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-create_simulator_devices)
 
 ## About create_simulator_devices
